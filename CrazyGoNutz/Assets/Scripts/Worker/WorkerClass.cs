@@ -24,7 +24,7 @@ public class Worker
 	
 	float productivity = 100;	// Ratio of communication AND frustration
 	float communication = 100;	// Descreased by WORKING, Increased by CONFERRING
-	float frustration = 100;	// Increased by WORKING and FAILURE, Descreased by RECREATION
+	float frustration = 1;	// Increased by WORKING and FAILURE, Descreased by RECREATION
 	
 	SnapTarget lastSnapTarget = null;
 	SnapTarget currentSnapTarget = null;
@@ -48,6 +48,29 @@ public class Worker
 		}
 	}
 	
+	public void UpdateStats()
+	{
+		//SnapTarget currentSnapTarget = worker.GetSnapTarget();
+		if(currentSnapTarget != null)
+		{
+			SnapTargetType type = currentSnapTarget.GetType();
+			switch(type)
+			{
+				case SnapTargetType.Conference:
+					AdjustCommunication(GameController.INCREASE * Time.deltaTime);
+					break;
+				case SnapTargetType.Recreation:
+					AdjustFrustration(GameController.DECREASE * Time.deltaTime);
+					AdjustCommunication(GameController.SLIGHT_INCREASE * Time.deltaTime);
+					break;
+				case SnapTargetType.Workstation:
+					AdjustFrustration(GameController.INCREASE * Time.deltaTime);
+					AdjustCommunication(GameController.SLIGHT_DECREASE * Time.deltaTime);
+					break;
+			}
+		}
+	}
+	
 	/////////////////////////// STATS //////////////////////////////
 	
 	public void AdjustCommunication(float howMuch)
@@ -66,7 +89,21 @@ public class Worker
 	}
 	private void CalculateProductivity()
 	{
-		productivity = communication - frustration;
+		productivity = 100 - (frustration) + (50 - communication);
+		if(productivity < 1) productivity = 1;
+		if(productivity > 100) productivity = 100;
+	}
+	
+	public float ProductivityPercent()
+	{
+		return productivity / 100f;
+	}
+	
+	/////////////////////////// WORKER TYPE //////////////////////////////
+	
+	public WorkerType GetWorkerType()
+	{
+		return workerType;	
 	}
 	
 	/////////////////////////// MOUSE OVER //////////////////////////////
@@ -85,6 +122,10 @@ public class Worker
 	public SnapTarget GetSnapTarget()
 	{
 		return currentSnapTarget;
+	}
+	public bool AtWorkstation()
+	{
+		return (currentSnapTarget != null && currentSnapTarget.GetType() == SnapTargetType.Workstation);
 	}
 	
 	/////////////////////////// DRAG //////////////////////////////

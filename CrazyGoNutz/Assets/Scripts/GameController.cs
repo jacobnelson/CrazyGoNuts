@@ -26,10 +26,17 @@ public class GameController : MonoBehaviour
 	//GameObject mouseOverWorker = null;
 	
 	// Ratios and Rates
-	private const float INCREASE = 1.0f;
-	private const float SLIGHT_INCREASE = 0.25f;
-	private const float DECREASE = -1.0f;
-	private const float SLIGHT_DECREASE = -0.25f;
+	public const float INCREASE = 1.0f;
+	public const float SLIGHT_INCREASE = 0.25f;
+	public const float DECREASE = -1.0f;
+	public const float SLIGHT_DECREASE = -0.25f;
+	
+	private const float WORK_RATE = 1.0f;
+	
+	// Completion Bar
+	private float completion = 0.0f;				// TODO: This is only temporary
+	private float currentTaskProgramming = 0.0f;	// TODO: This is only temporary
+	private float currentTaskArt = 0.0f;			// TODO: This is only temporary
 	
 	// Use this for initialization
 	void Start () 
@@ -44,11 +51,18 @@ public class GameController : MonoBehaviour
 	void Update () 
 	{
 		UpdateWorkers();	// Tells workers to do work, and other workstation stuff
+		
+		completion = currentTaskProgramming + currentTaskArt;
 	}
 	
 	void OnGUI()
 	{
 		// DrawWorkerStats();		// Loops through workers and draws their current stats
+		
+		// Temp for Debug
+		GUI.Label( new Rect(10, 10, 256, 24), "completion: " + completion);
+		GUI.Label( new Rect(10, 34, 256, 24), "currentTaskProgramming: " + currentTaskProgramming);
+		GUI.Label( new Rect(10, 58, 256, 24), "currentTaskArt: " + currentTaskArt);
 	}
 	
 	/////////////////////////// UPDATE WORKERS //////////////////////////////
@@ -57,25 +71,26 @@ public class GameController : MonoBehaviour
 	{
 		foreach(Worker worker in workers)
 		{
-			SnapTarget currentSnapTarget = worker.GetSnapTarget();
-			if(currentSnapTarget != null)
-			{
-				SnapTargetType type = currentSnapTarget.GetType();
-				switch(type)
-				{
-					case SnapTargetType.Conference:
-						worker.AdjustCommunication(INCREASE * Time.deltaTime);
-						break;
-					case SnapTargetType.Recreation:
-						worker.AdjustFrustration(DECREASE * Time.deltaTime);
-						worker.AdjustCommunication(SLIGHT_INCREASE * Time.deltaTime);
-						break;
-					case SnapTargetType.Workstation:
-						worker.AdjustFrustration(INCREASE * Time.deltaTime);
-						worker.AdjustCommunication(SLIGHT_DECREASE * Time.deltaTime);
-						break;
-				}
-			}
+			worker.UpdateStats();
+			if(worker.AtWorkstation()) UpdateCurrentTask( worker.GetWorkerType(), worker.ProductivityPercent() );
+		}
+	}
+	
+	/////////////////////////// UPDATE CURRENT TASK //////////////////////////////
+	
+	private void UpdateCurrentTask(WorkerType type, float productivity)
+	{
+		switch(type)
+		{
+			case WorkerType.Artist:
+				currentTaskArt += productivity * WORK_RATE * Time.deltaTime;
+				break;
+			case WorkerType.Programmer:
+				currentTaskProgramming += productivity * WORK_RATE * Time.deltaTime;
+				break;
+			case WorkerType.AudioDesigner:
+				
+				break;
 		}
 	}
 	
