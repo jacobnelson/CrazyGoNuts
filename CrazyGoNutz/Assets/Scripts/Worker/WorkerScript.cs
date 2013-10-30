@@ -25,6 +25,25 @@ public class WorkerScript : MonoBehaviour
 	// Update is called once per frame
 	void Update ()
 	{
+		/*if(gameObject.layer == 2)
+		{
+			if(worker.GetSnapTarget() == null) gameObject.layer = 0;
+		}*/
+	}
 	
+	/////////////////////////// GET VARS //////////////////////////////
+	
+	/*public Vector3 GetPosition()
+	{
+		return transform.position;
+	}*/
+
+	public Worker GetWorker()	// Returns the Worker Class Instance
+	{
+		return worker;
+	}
+	public void SetWorker(Worker worker)	// Sets the Worker Class Instance
+	{
+		this.worker = worker;
 	}
 }

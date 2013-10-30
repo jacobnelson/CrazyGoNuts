@@ -24,7 +24,13 @@ public class GameController : MonoBehaviour
 	
 	// MouseOver
 	//GameObject mouseOverWorker = null;
-
+	
+	// Ratios and Rates
+	private const float INCREASE = 1.0f;
+	private const float SLIGHT_INCREASE = 0.25f;
+	private const float DECREASE = -1.0f;
+	private const float SLIGHT_DECREASE = -0.25f;
+	
 	// Use this for initialization
 	void Start () 
 	{
@@ -37,12 +43,40 @@ public class GameController : MonoBehaviour
 	// Update is called once per frame
 	void Update () 
 	{
-	
+		UpdateWorkers();	// Tells workers to do work, and other workstation stuff
 	}
 	
 	void OnGUI()
 	{
-		
+		// DrawWorkerStats();		// Loops through workers and draws their current stats
+	}
+	
+	/////////////////////////// UPDATE WORKERS //////////////////////////////
+	
+	private void UpdateWorkers()
+	{
+		foreach(Worker worker in workers)
+		{
+			SnapTarget currentSnapTarget = worker.GetSnapTarget();
+			if(currentSnapTarget != null)
+			{
+				SnapTargetType type = currentSnapTarget.GetType();
+				switch(type)
+				{
+					case SnapTargetType.Conference:
+						worker.AdjustCommunication(INCREASE * Time.deltaTime);
+						break;
+					case SnapTargetType.Recreation:
+						worker.AdjustFrustration(DECREASE * Time.deltaTime);
+						worker.AdjustCommunication(SLIGHT_INCREASE * Time.deltaTime);
+						break;
+					case SnapTargetType.Workstation:
+						worker.AdjustFrustration(INCREASE * Time.deltaTime);
+						worker.AdjustCommunication(SLIGHT_DECREASE * Time.deltaTime);
+						break;
+				}
+			}
+		}
 	}
 	
 	/////////////////////////// MOUSE INPUT //////////////////////////////
@@ -73,7 +107,9 @@ public class GameController : MonoBehaviour
 				pos.z = Random.Range(-2.0f, 2.0f);
 				obj = Instantiate(workerPrefab, pos, Quaternion.identity) as GameObject;
 				
-				AddWorker(obj);
+				WorkerScript script = obj.GetComponent<WorkerScript>();
+				
+				script.SetWorker( AddWorker(obj) );
 			}
 		}
 	}
@@ -83,7 +119,8 @@ public class GameController : MonoBehaviour
 	static public Worker AddWorker(GameObject newWorker)
 	{
 		Worker worker = null;
-		worker = new Worker(newWorker);
+		int rand = Random.Range(0,3);
+		worker = new Worker(newWorker, (WorkerType)rand);
 		workers.Add(worker);
 		
 		Debug.Log("GameController -> workers.Count = " + workers.Count);
@@ -114,6 +151,16 @@ public class GameController : MonoBehaviour
 		Debug.Log("GameController -> snaptargets.Count = " + snaptargets.Count);
 		
 		return snapTarget;
+	}
+	
+	/////////////////////////// FIND OPEN SNAPTARGET  //////////////////////////////
+	
+	static public SnapTarget FindOpenSnapTargetOfType(SnapTargetType type)
+	{
+		foreach(SnapTarget snapTarget in snaptargets) 
+			if(snapTarget != null && !snapTarget.isRoom() && snapTarget.MatchesType(type) && snapTarget.isEmpty()) return snapTarget;
+		
+		return null;
 	}
 	
 }

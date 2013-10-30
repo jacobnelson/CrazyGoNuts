@@ -18,11 +18,13 @@ public class CameraRaycaster : MonoBehaviour
 	Vector3 mousePos = Vector3.zero;
 	Vector3 lastMousePos = Vector3.zero;
 	GameObject mouseOverObject = null;
-	GameObject mouseOverWorker = null;
-	GameObject mouseOverSnapTarget = null;
+	//GameObject mouseOverWorker = null;
+	Worker mouseOverWorker = null;
+	SnapTarget mouseOverSnapTarget = null;
 	
 	// Drag and Drop Stuff
-	GameObject dragObject = null;	// Ignores Raycasting
+	//GameObject dragObject = null;	// Ignores Raycasting
+	Worker dragObject = null;
 	
 	// Camera Bounds
 	
@@ -48,7 +50,7 @@ public class CameraRaycaster : MonoBehaviour
 		MouseOver();
 		
 		//if(dragObject) Debug.Log("Dragging " + dragObject.name);
-		if(mouseOverObject) Debug.Log("MouseOver " + mouseOverObject.name);
+		//if(mouseOverObject) Debug.Log("MouseOver " + mouseOverObject.name);
 		
 		lastMousePos = mousePos;
 	}
@@ -81,12 +83,12 @@ public class CameraRaycaster : MonoBehaviour
 		}
 		else if(Input.GetButton ("Fire1")) // Left Click down continuous 
 		{
-			if(!dragObject) BeginMouseDrag();
+			if(dragObject == null) BeginMouseDrag();
 			else MouseDrag();
 		}
 		else // Left Click is not down
 		{
-			if(dragObject) MouseDrop();
+			if(dragObject != null) MouseDrop();
 		}
 	}
 	
@@ -103,11 +105,14 @@ public class CameraRaycaster : MonoBehaviour
 			
 			if(mouseOverObject.CompareTag("SnapTarget") || mouseOverObject.layer == 8)
          	{
-				mouseOverSnapTarget = mouseOverObject;
+				SnapTargetScript script = mouseOverObject.GetComponent<SnapTargetScript>();
+				mouseOverSnapTarget = script.GetSnapTarget();
          	}
 			else if(mouseOverObject.CompareTag("Worker"))
          	{
-				mouseOverWorker = mouseOverObject;
+				//mouseOverWorker = mouseOverObject;
+				WorkerScript script = mouseOverObject.GetComponent<WorkerScript>();
+				mouseOverWorker = script.GetWorker();
          	}
          	else
          	{
@@ -124,7 +129,7 @@ public class CameraRaycaster : MonoBehaviour
 		
 	    if (Physics.Raycast (ray,out hit, 350f)) 
 	    {
-	        Debug.DrawLine (ray.origin, hit.point);
+	        //Debug.DrawLine (ray.origin, hit.point);
 	        if(hit.transform != null)
 	        {
 	        	raytargetObject = hit.transform.gameObject;         	
@@ -140,9 +145,16 @@ public class CameraRaycaster : MonoBehaviour
 		var ray = Camera.main.ScreenPointToRay (Input.mousePosition);
 	    RaycastHit hit;
 		
+		int layer1 = 0;		// Worker Layer
+		int layer2 = 8;		// Worker Layer
+		int layerMask = (1 << layer2);
+		
+		//LayerMask mask = 0;
+		
 	    if (Physics.Raycast (ray,out hit, 350f)) 
+		//if (Physics.Raycast (ray,out hit, 350f, layerMask)) 
 	    {
-	        Debug.DrawLine (ray.origin, hit.point);
+	        Debug.DrawLine (ray.origin, hit.point, Color.red);
 	        if(hit.transform != null)
 	        {
 	        	rayhitpos = hit.point;        	
@@ -158,11 +170,12 @@ public class CameraRaycaster : MonoBehaviour
 	private void BeginMouseDrag()
 	{
 		// mouseOverObject becomes dragObject, layer is set to 3
-		if(mouseOverWorker)
+		if(mouseOverWorker != null)
 		{
 			dragObject = mouseOverWorker;
-			dragObject.layer = 2;
-		} else Debug.Log("mouseOverWorker is null");
+			//dragObject.layer = 2;
+			dragObject.StartDrag();
+		} //else Debug.Log("mouseOverWorker is null");
 	}
 	
 	private void MouseDrag()
@@ -170,14 +183,16 @@ public class CameraRaycaster : MonoBehaviour
 		// dragObject is follows the mouse until Dropped.
 		Vector3 pos = RaycastVectorFromMouse();
 		
-		if(mouseOverSnapTarget)
+		if(mouseOverSnapTarget != null && mouseOverSnapTarget.isEmpty() && !mouseOverSnapTarget.isRoom())
 		{
-			pos = mouseOverSnapTarget.transform.position;
-			dragObject.transform.position = new Vector3(pos.x, 0.5f, pos.z);
+			pos = mouseOverSnapTarget.GetPosition();
+			//dragObject.transform.position = new Vector3(pos.x, 0.5f, pos.z);
+			dragObject.SetPosition( new Vector3(pos.x, 0.5f, pos.z) );
 		}
 		else if(pos != Vector3.zero)
 		{
-			dragObject.transform.position = new Vector3(pos.x, 0.5f, pos.z);
+			//dragObject.transform.position = new Vector3(pos.x, 0.5f, pos.z);
+			dragObject.SetPosition( new Vector3(pos.x, 0.5f, pos.z) );
 		}
 	}
 	
@@ -185,11 +200,32 @@ public class CameraRaycaster : MonoBehaviour
 	{
 		// check for snapTarget, if one is found and is valid, snap dragObject to it
 		// else, snap to last snapTarget
-		if(dragObject)
+		if(dragObject != null)
 		{
-			dragObject.layer = 0;
+			if(mouseOverSnapTarget != null)
+			{
+				if(mouseOverSnapTarget.isRoom())
+				{
+					Debug.Log("Dropped in Room");
+					DropInRoom(dragObject, mouseOverSnapTarget);
+				}
+				else
+				{
+					Debug.Log("Dropped on SnapTarget");
+					dragObject.EndDrag(mouseOverSnapTarget);
+				}
+			}
+			else dragObject.EndDrag(null);
+
 			dragObject = null;
 		}
+	}
+	
+	private void DropInRoom(Worker worker, SnapTarget snapTarget)
+	{
+		SnapTarget openSnapTarget = GameController.FindOpenSnapTargetOfType( snapTarget.GetType() );
+		
+		dragObject.EndDrag(openSnapTarget);
 	}
 	
 }

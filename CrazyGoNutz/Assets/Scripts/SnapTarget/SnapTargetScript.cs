@@ -17,9 +17,30 @@ public class SnapTargetScript : MonoBehaviour
 		if(snapTarget == null) snapTarget = GameController.AddSnapTarget(gameObject);	// TODO: This will change.
 	}
 	
-	// Update is called once per frame
-	void Update () 
-	{
+	/////////////////////////// WORKER STUFF //////////////////////////////
 	
+	public bool CatchWorker(Worker worker)
+	{
+		if(snapTarget != null && snapTarget.currentWorker == null)
+		{
+			snapTarget.currentWorker = worker;
+			return true;
+		}
+		return false;
+	}
+	
+	/////////////////////////// GET VARS //////////////////////////////
+	
+	public bool isARoom()
+	{
+		return isRoom;
+	}
+	public Vector3 GetPosition()
+	{
+		return transform.position;
+	}
+	public SnapTarget GetSnapTarget()	// Returns the SnapTarget Class Instance
+	{
+		return snapTarget;
 	}
 }
