@@ -21,6 +21,7 @@ public class Worker
 	WorkerType workerType;
 	bool mouseOver = false;
 	public GameObject gameObject = null;
+	ParticleSystem roadblockParticle = null;
 	
 	float productivity = 100;	// Ratio of communication AND frustration
 	float communication = 100;	// Descreased by WORKING, Increased by CONFERRING
@@ -29,10 +30,18 @@ public class Worker
 	SnapTarget lastSnapTarget = null;
 	SnapTarget currentSnapTarget = null;
 	
+	// Roadblock
+	bool roadblocked = false;
+	float secondCounter = 0;
+	float clickCounter = 0;
+	
 	public Worker(GameObject gameObject, WorkerType workerType)
 	{
 		this.gameObject = gameObject;
 		this.workerType = workerType;
+		
+		roadblockParticle = gameObject.GetComponentInChildren<ParticleSystem>();
+		if(roadblockParticle != null) roadblockParticle.Stop();
 		
 		switch(workerType)
 		{
@@ -69,6 +78,39 @@ public class Worker
 					break;
 			}
 		}
+		
+		// Calculate Roadblock Chance
+		if(AtWorkstation())
+		{
+			secondCounter -= Time.deltaTime;
+			clickCounter -= Time.deltaTime;
+			if(secondCounter <= 0)
+			{
+				if(!roadblocked)
+				{
+					float rand = Random.Range(frustration, 100);
+					if(rand >= 99) SpawnRoadblock();
+				}
+				secondCounter = 1.0f;	
+			}
+			/*if(clickCounter <= 0)
+			{
+				clickCounter = 0.5f;	
+			}*/
+		}
+	}
+	
+	/////////////////////////// ROADBLOCK //////////////////////////////
+	
+	private void SpawnRoadblock()
+	{
+		roadblocked = true;
+		if(roadblockParticle != null) roadblockParticle.Play();
+	}
+	private void RemoveRoadblock()
+	{
+		roadblocked = false;
+		if(roadblockParticle != null) roadblockParticle.Stop();
 	}
 	
 	/////////////////////////// STATS //////////////////////////////
@@ -112,6 +154,11 @@ public class Worker
 		return productivity;
 	}
 	
+	public bool Roadblocked()
+	{
+		return roadblocked;	
+	}
+	
 	/////////////////////////// WORKER TYPE //////////////////////////////
 	
 	public WorkerType GetWorkerType()
@@ -128,6 +175,14 @@ public class Worker
 	public bool GetMouseOver()
 	{
 		return mouseOver;
+	}
+	
+	/////////////////////////// MOUSE CLICK //////////////////////////////
+	
+	public void MouseClick()
+	{
+		Debug.Log("You've clicked me, oh my.");
+		RemoveRoadblock();
 	}
 	
 	/////////////////////////// SNAP TARGET //////////////////////////////

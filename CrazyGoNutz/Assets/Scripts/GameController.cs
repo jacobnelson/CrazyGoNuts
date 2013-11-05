@@ -54,6 +54,11 @@ public class GameController : MonoBehaviour
 	private Task currentTask = null;
 	private int currentTaskIndex = 0;
 	
+	// Milestones
+	private List<Milestone> milestones = new List<Milestone>();
+	//private Task currentTask = null;
+	//private int currentTaskIndex = 0;
+	
 	// Deadline
 	private float gameLengthMax = 480f;	// total length of game before losing, in seconds	// 8min?
 	private float deadlineCurrent = 0f;	// current length of the game
@@ -87,6 +92,9 @@ public class GameController : MonoBehaviour
 		
 		// Calculate Completion
 		CalculateCompletion();
+		
+		// Check Milestones
+		CheckMilestones();
 		
 		// Deadline
 		UpdateDeadline();
@@ -127,8 +135,11 @@ public class GameController : MonoBehaviour
 	{
 		foreach(Worker worker in workers)
 		{
-			worker.UpdateStats();
-			if(worker.AtWorkstation()) WorkOnCurrentTask( worker.GetWorkerType(), worker.ProductivityPercent() );
+			worker.UpdateStats();	// Calc roadblock chance
+			if(worker.AtWorkstation() && !worker.Roadblocked())
+			{
+				WorkOnCurrentTask( worker.GetWorkerType(), worker.ProductivityPercent() );	// If worker at a workerstation, add to current task
+			}
 		}
 	}
 	
@@ -161,7 +172,7 @@ public class GameController : MonoBehaviour
 	private void GenerateTaskList()
 	{
 		float totalCompletion = 100;
-		
+		float currentPos = 0;
 		while(totalCompletion > 0)
 		{
 			// 5-15 at 360 secs means 18-54secs for a task, that is a max, so youd need to complete each task before that amount of time
@@ -174,9 +185,18 @@ public class GameController : MonoBehaviour
 			Task task = new Task(weight);	
 			
 			taskList.Add(task);
+			
+			// Generate Milestones
+			if(currentPos > 0)
+			{
+				Milestone milestone = new Milestone(currentPos);
+				milestones.Add(milestone);
+			}
+			
+			currentPos += weight;
 		}
 		
-		Debug.Log("GenerateTaskList -> Count is " + taskList.Count);
+		Debug.Log("GenerateTaskList -> Count is " + taskList.Count + ", with " + milestones.Count + "milestones");
 	}
 	
 	private void WorkOnCurrentTask(WorkerType type, float productivity)
@@ -214,6 +234,13 @@ public class GameController : MonoBehaviour
 		if(completion >= 100) {   } //YOU WIN!! 
 	}
 	
+	/////////////////////////// CHECK MILESTONES //////////////////////////////
+	
+	private void CheckMilestones()
+	{
+		foreach(Milestone milestone in milestones) if(!milestone.Complete()) milestone.Check(completion, ((float)deadlineCurrent / (float)deadlineMax) * 100);
+	}
+	
 	/////////////////////////// DRAW COMPLETION METER AND CURRENT TASK //////////////////////////////
 	
 	private void DrawCompletionMeter()
@@ -226,12 +253,21 @@ public class GameController : MonoBehaviour
 		GUI.DrawTexture( completionBarRect, solidColorTex);
 		
 		// Draw Milestones
-		for(int i = 0; i < taskList.Count; i++)
+		/*for(int i = 0; i < taskList.Count; i++)
 		{
 			GUI.color = Color.black;
-			Rect rect = new Rect((taskList[i].GetTaskWeight() * 0.01f) * (i + 1) * Screen.width,0,2,16);
+			Rect rect = new Rect((taskList[i].GetTaskWeight() / 100) * (i + 1) * Screen.width,0,2,16);	// TODO: Fix this.
+			GUI.DrawTexture( rect, solidColorTex);
+		}*/
+		for(int i = 0; i < milestones.Count; i++)
+		{
+			if(!milestones[i].Complete()) GUI.color = Color.white;
+			else if(milestones[i].Failed()) GUI.color = Color.red;
+			else GUI.color = Color.blue;
+			Rect rect = new Rect((milestones[i].position * 0.01f * Screen.width),0,2,16);	// TODO: Fix this.
 			GUI.DrawTexture( rect, solidColorTex);
 		}
+		
 		
 		// Draw Deadline
 		GUI.color = Color.red;

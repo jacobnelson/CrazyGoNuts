@@ -75,6 +75,7 @@ public class CameraRaycaster : MonoBehaviour
 			else if(clickedObject.CompareTag("Worker"))
          	{
          		//Debug.Log("CameraRaycaster.MouseClickInput -> Clicked on 'Worker' " + clickedObject.name + ".");
+				if(mouseOverWorker != null) mouseOverWorker.MouseClick();
          	}
          	else
          	{
@@ -194,6 +195,8 @@ public class CameraRaycaster : MonoBehaviour
 			//dragObject.transform.position = new Vector3(pos.x, 0.5f, pos.z);
 			dragObject.SetPosition( new Vector3(pos.x, 0.5f, pos.z) );
 		}
+		
+		// Highlight SnapTargets Green or Red
 	}
 	
 	private void MouseDrop()
