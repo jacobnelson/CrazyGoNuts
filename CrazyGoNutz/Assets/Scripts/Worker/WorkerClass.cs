@@ -89,7 +89,7 @@ public class Worker
 	}
 	private void CalculateProductivity()
 	{
-		productivity = 100 - (frustration) + (50 - communication);
+		productivity = 100 - (frustration) + (communication - 50);
 		if(productivity < 1) productivity = 1;
 		if(productivity > 100) productivity = 100;
 	}
@@ -97,6 +97,19 @@ public class Worker
 	public float ProductivityPercent()
 	{
 		return productivity / 100f;
+	}
+	
+	public float GetCommunication()
+	{
+		return communication;
+	}
+	public float GetFrustration()
+	{
+		return frustration;
+	}
+	public float GetProductivity()
+	{
+		return productivity;
 	}
 	
 	/////////////////////////// WORKER TYPE //////////////////////////////

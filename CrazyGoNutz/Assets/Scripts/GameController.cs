@@ -16,6 +16,13 @@ public class GameController : MonoBehaviour
 	static private List<Worker> workers = new List<Worker>();
 	static private List<SnapTarget> snaptargets = new List<SnapTarget>();
 	
+	static public int Programmers = 0;
+	static public int Artists = 0;
+	static public int AudioDesigners = 0;
+	static public int TotalWorkers = 0;
+	
+	static public float deadlineMax = 480f;
+	
 	// Component Reference
 	CameraRaycaster cameraRaycaster = null;
 	
@@ -28,23 +35,46 @@ public class GameController : MonoBehaviour
 	// Ratios and Rates
 	public const float INCREASE = 1.0f;
 	public const float SLIGHT_INCREASE = 0.25f;
-	public const float DECREASE = -1.0f;
+	public const float DECREASE = -2.0f;
 	public const float SLIGHT_DECREASE = -0.25f;
 	
 	private const float WORK_RATE = 1.0f;
 	
+	// Productivity Per Sec
+	
+	
 	// Completion Bar
 	private float completion = 0.0f;				// TODO: This is only temporary
+	private Rect completionBarRect = new Rect(0,0,100,16);
 	private float currentTaskProgramming = 0.0f;	// TODO: This is only temporary
 	private float currentTaskArt = 0.0f;			// TODO: This is only temporary
+	
+	// Current Task
+	private List<Task> taskList = new List<Task>();
+	private Task currentTask = null;
+	private int currentTaskIndex = 0;
+	
+	// Deadline
+	private float gameLengthMax = 480f;	// total length of game before losing, in seconds	// 8min?
+	private float deadlineCurrent = 0f;	// current length of the game
+	
+	// Textures
+	public Texture2D solidColorTex = null;
 	
 	// Use this for initialization
 	void Start () 
 	{
 		cameraRaycaster = Camera.main.GetComponent<CameraRaycaster>();
 		
+		deadlineMax = gameLengthMax;
+		
 		// Create Worker GameObjects
 		SpawnWorkers();
+		CountWorkers();
+		
+		// Create Tasks
+		GenerateTaskList();
+
 	}
 	
 	// Update is called once per frame
@@ -52,17 +82,43 @@ public class GameController : MonoBehaviour
 	{
 		UpdateWorkers();	// Tells workers to do work, and other workstation stuff
 		
-		completion = currentTaskProgramming + currentTaskArt;
+		// Update Task
+		UpdateCurrentTask();
+		
+		// Calculate Completion
+		CalculateCompletion();
+		
+		// Deadline
+		UpdateDeadline();
 	}
 	
 	void OnGUI()
 	{
 		// DrawWorkerStats();		// Loops through workers and draws their current stats
 		
+		// Completion Meter
+		DrawCompletionMeter();
+
+		
 		// Temp for Debug
-		GUI.Label( new Rect(10, 10, 256, 24), "completion: " + completion);
-		GUI.Label( new Rect(10, 34, 256, 24), "currentTaskProgramming: " + currentTaskProgramming);
-		GUI.Label( new Rect(10, 58, 256, 24), "currentTaskArt: " + currentTaskArt);
+		GUI.Label( new Rect(10, 24, 256, 24), "completion: " + completion);
+		GUI.Label( new Rect(10, 48, 256, 24), "deadline: " + deadlineCurrent.ToString("f2") + " / " + gameLengthMax);
+		if(currentTask != null)
+		{
+			GUI.Label( new Rect(10, 72, 256, 24), "currentTask Programming: " + currentTask.programming.ToString("f2") + " / " + currentTask.programmingReq.ToString("f2"));
+			GUI.Label( new Rect(10, 96, 256, 24), "currentTask Art: " + currentTask.art.ToString("f2") + " / " + currentTask.artReq.ToString("f2"));
+			GUI.Label( new Rect(10, 120, 256, 24), "currentTask Sound: " + currentTask.sound.ToString("f2") + " / " + currentTask.soundReq.ToString("f2"));
+		}
+		
+		// Debug mouseOverWorker stats
+		if(cameraRaycaster != null && cameraRaycaster.mouseOverWorker != null)
+		{
+			Worker worker =  cameraRaycaster.mouseOverWorker;
+			GUI.Label( new Rect(Screen.width - 256, Screen.height - 86, 256, 24), "WorkerType: " + worker.GetWorkerType());
+			GUI.Label( new Rect(Screen.width - 256, Screen.height - 72, 256, 24), "Communication: " + worker.GetCommunication());
+			GUI.Label( new Rect(Screen.width - 256, Screen.height - 48, 256, 24), "Frustration: " + worker.GetFrustration());
+			GUI.Label( new Rect(Screen.width - 256, Screen.height - 24, 256, 24), "Productivity: " + worker.GetProductivity());
+		}
 	}
 	
 	/////////////////////////// UPDATE WORKERS //////////////////////////////
@@ -72,18 +128,70 @@ public class GameController : MonoBehaviour
 		foreach(Worker worker in workers)
 		{
 			worker.UpdateStats();
-			if(worker.AtWorkstation()) UpdateCurrentTask( worker.GetWorkerType(), worker.ProductivityPercent() );
+			if(worker.AtWorkstation()) WorkOnCurrentTask( worker.GetWorkerType(), worker.ProductivityPercent() );
 		}
 	}
 	
-	/////////////////////////// UPDATE CURRENT TASK //////////////////////////////
+	/////////////////////////// TASKS //////////////////////////////
 	
-	private void UpdateCurrentTask(WorkerType type, float productivity)
+	private void UpdateCurrentTask()
 	{
-		switch(type)
+		// Check if currentTask is Complete
+		if(currentTask != null && currentTask.Complete())
+		{
+			// Check Milestone?
+			currentTaskIndex++;
+			currentTask = null;
+		}
+		
+		if(currentTask == null && currentTaskIndex < taskList.Count) currentTask = taskList[currentTaskIndex];
+		
+		if(currentTask != null) currentTask.Update();
+	}
+	private void GetCurrentTask()	// Get taskList[0], then remove it from list
+	{
+		
+		/*if(taskList.Count > 0)
+		{
+			currentTask = taskList[0];
+			taskList.RemoveAt(0);
+		}*/
+	}
+	
+	private void GenerateTaskList()
+	{
+		float totalCompletion = 100;
+		
+		while(totalCompletion > 0)
+		{
+			// 5-15 at 360 secs means 18-54secs for a task, that is a max, so youd need to complete each task before that amount of time
+			float weight = Random.Range(5,15);				// Get Random TaskWeight, this is a percentage of total work, not an amount of time
+			float difference = totalCompletion - weight;	// Find Difference
+			
+			if(difference < 0) weight = totalCompletion;	// If taskweight is greater than total completion, weight = total completion
+			totalCompletion -= weight;
+			
+			Task task = new Task(weight);	
+			
+			taskList.Add(task);
+		}
+		
+		Debug.Log("GenerateTaskList -> Count is " + taskList.Count);
+	}
+	
+	private void WorkOnCurrentTask(WorkerType type, float productivity)
+	{
+		if(currentTask ==  null) return;
+		
+		float workamount = productivity * WORK_RATE * Time.deltaTime;
+		
+		currentTask.WorkOn(type, workamount);
+		
+		/*switch(type)
 		{
 			case WorkerType.Artist:
-				currentTaskArt += productivity * WORK_RATE * Time.deltaTime;
+				currentTaskArt += 
+				
 				break;
 			case WorkerType.Programmer:
 				currentTaskProgramming += productivity * WORK_RATE * Time.deltaTime;
@@ -91,7 +199,64 @@ public class GameController : MonoBehaviour
 			case WorkerType.AudioDesigner:
 				
 				break;
+		}*/
+	}
+	
+	/////////////////////////// COMPLETION METER //////////////////////////////
+	
+	private void CalculateCompletion()
+	{
+		completion = 0;
+		foreach(Task task in taskList) completion += task.GetCompletionAmount();	// Gets task completion percent * taskWeight
+		
+		//completion /= taskList.Count;
+		
+		if(completion >= 100) {   } //YOU WIN!! 
+	}
+	
+	/////////////////////////// DRAW COMPLETION METER AND CURRENT TASK //////////////////////////////
+	
+	private void DrawCompletionMeter()
+	{
+		// Draw Meter BG
+		
+		// Draw Completion Bar
+		completionBarRect.width = Screen.width * (completion / 100f);
+		GUI.color = Color.green;
+		GUI.DrawTexture( completionBarRect, solidColorTex);
+		
+		// Draw Milestones
+		for(int i = 0; i < taskList.Count; i++)
+		{
+			GUI.color = Color.black;
+			Rect rect = new Rect((taskList[i].GetTaskWeight() * 0.01f) * (i + 1) * Screen.width,0,2,16);
+			GUI.DrawTexture( rect, solidColorTex);
 		}
+		
+		// Draw Deadline
+		GUI.color = Color.red;
+		Rect deadlineRect =  new Rect( ((float)deadlineCurrent / (float)deadlineMax) * Screen.width,0,4,32);
+		GUI.DrawTexture(deadlineRect , solidColorTex);
+		
+		GUI.color = Color.white;
+	}
+	
+	private void DrawCurrentTask()
+	{
+		// Draw Meter BG
+		
+		// Draw Completion Bar
+		//completionBarRect.width = Screen.width * (completion / 100f);
+		//GUI.DrawTexture( completionBarRect, solidColorTex);
+		
+		// Draw Milestones
+	}
+	
+	/////////////////////////// DEADLINE //////////////////////////////
+	
+	private void UpdateDeadline()
+	{
+		deadlineCurrent += Time.deltaTime;
 	}
 	
 	/////////////////////////// MOUSE INPUT //////////////////////////////
@@ -124,23 +289,50 @@ public class GameController : MonoBehaviour
 				
 				WorkerScript script = obj.GetComponent<WorkerScript>();
 				
-				script.SetWorker( AddWorker(obj) );
+				// type, make sure at least one of each class
+				int type = i;
+				if(type > 2) type = Random.Range(0,3);
+				
+				script.SetWorker( AddWorker(obj, (WorkerType)type) );
 			}
 		}
 	}
 	
 	/////////////////////////// WORKER LIST //////////////////////////////
 	
-	static public Worker AddWorker(GameObject newWorker)
+	static public Worker AddWorker(GameObject newWorker, WorkerType type)
 	{
 		Worker worker = null;
-		int rand = Random.Range(0,3);
-		worker = new Worker(newWorker, (WorkerType)rand);
+		worker = new Worker(newWorker, type);
 		workers.Add(worker);
 		
-		Debug.Log("GameController -> workers.Count = " + workers.Count);
-		
 		return worker;
+	}
+	
+	static public void CountWorkers()
+	{
+		Artists = 0;
+		Programmers = 0;
+		AudioDesigners = 0;
+		TotalWorkers = 0;
+		foreach(Worker worker in workers)
+		{
+			switch(worker.GetWorkerType())
+			{
+				case WorkerType.Artist:
+					Artists++;
+					break;
+				case WorkerType.Programmer:
+					Programmers++;
+					break;
+				case WorkerType.AudioDesigner:
+					AudioDesigners++;
+					break;
+			}
+		}
+		TotalWorkers = workers.Count;
+		
+		Debug.Log("Workers: " + workers.Count + "; Programmers " + Programmers + "; Artists " + Artists + "; AudioDesigners " + AudioDesigners);
 	}
 	
 	/////////////////////////// SNAPTARGET LIST //////////////////////////////
@@ -163,7 +355,7 @@ public class GameController : MonoBehaviour
 		snapTarget = new SnapTarget(newSnapTarget, type, isRoom);
 		snaptargets.Add(snapTarget);
 		
-		Debug.Log("GameController -> snaptargets.Count = " + snaptargets.Count);
+		//Debug.Log("GameController -> snaptargets.Count = " + snaptargets.Count);
 		
 		return snapTarget;
 	}

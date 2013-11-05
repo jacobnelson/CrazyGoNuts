@@ -19,7 +19,7 @@ public class CameraRaycaster : MonoBehaviour
 	Vector3 lastMousePos = Vector3.zero;
 	GameObject mouseOverObject = null;
 	//GameObject mouseOverWorker = null;
-	Worker mouseOverWorker = null;
+	public Worker mouseOverWorker = null;
 	SnapTarget mouseOverSnapTarget = null;
 	
 	// Drag and Drop Stuff
@@ -70,15 +70,15 @@ public class CameraRaycaster : MonoBehaviour
 			
 			if(clickedObject.CompareTag("SnapTarget") || clickedObject.layer == 8)
          	{
-         		Debug.Log("CameraRaycaster.MouseClickInput -> Clicked on 'SnapTarget' " + clickedObject.name + ".");
+         		//Debug.Log("CameraRaycaster.MouseClickInput -> Clicked on 'SnapTarget' " + clickedObject.name + ".");
          	}
 			else if(clickedObject.CompareTag("Worker"))
          	{
-         		Debug.Log("CameraRaycaster.MouseClickInput -> Clicked on 'Worker' " + clickedObject.name + ".");
+         		//Debug.Log("CameraRaycaster.MouseClickInput -> Clicked on 'Worker' " + clickedObject.name + ".");
          	}
          	else
          	{
-         		Debug.Log("CameraRaycaster -> Clicked on " + clickedObject.name + ", has no effect.");
+         		//Debug.Log("CameraRaycaster -> Clicked on " + clickedObject.name + ", has no effect.");
          	}	
 		}
 		else if(Input.GetButton ("Fire1")) // Left Click down continuous 
@@ -206,12 +206,12 @@ public class CameraRaycaster : MonoBehaviour
 			{
 				if(mouseOverSnapTarget.isRoom())
 				{
-					Debug.Log("Dropped in Room");
+					//Debug.Log("Dropped in Room");
 					DropInRoom(dragObject, mouseOverSnapTarget);
 				}
 				else
 				{
-					Debug.Log("Dropped on SnapTarget");
+					//Debug.Log("Dropped on SnapTarget");
 					dragObject.EndDrag(mouseOverSnapTarget);
 				}
 			}
