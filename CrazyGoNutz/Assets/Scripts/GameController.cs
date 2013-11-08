@@ -40,7 +40,9 @@ public class GameController : MonoBehaviour
 	public const float DECREASE = -2.0f;
 	public const float SLIGHT_DECREASE = -0.25f;
 	
-	public const float WORK_RATE = 0.45f;	// How much work a Worker does per second
+	public const float WORK_RATE = 0.6f;	// How much work a Worker does per second
+		
+	public const float MILESTONE_FRUSTRATION_REDUCTION = -10.0f;
 	
 	// Productivity Per Sec
 	private float totalProductivity = 0f;
@@ -265,7 +267,11 @@ public class GameController : MonoBehaviour
 			if(!milestone.Complete()) 
 			{
 				milestone.Check(completion, ((float)deadlineCurrent / (float)deadlineMax) * 100);
-				if(milestone.Complete() && milestone.Failed()) {}	// Spawn a Meeting
+				if(milestone.Complete())
+				{
+					if(milestone.Failed()) {}	// Spawn a Meeting
+					if(milestone.Achieved()) { ReduceGroupFrustration(MILESTONE_FRUSTRATION_REDUCTION); }	// Reduce Frustration
+				}
 			}
 		}
 	}
@@ -407,6 +413,13 @@ public class GameController : MonoBehaviour
 				script.SetWorker( AddWorker(obj, (WorkerType)type) );
 			}
 		}
+	}
+	
+	/////////////////////////// GROUP EFFECTS //////////////////////////////
+	
+	private void ReduceGroupFrustration(float howMuch)
+	{
+		foreach(Worker worker in workers) worker.AdjustFrustration(howMuch);
 	}
 	
 	/////////////////////////// WORKER LIST //////////////////////////////

@@ -24,12 +24,12 @@ public class Task
 		// GameController.deadlineMax is the number of seconds it takes for the deadline to reach the end, thus causing the lose state
 		// GameController.deadlineMax / weight is fastest possible time a task can be completed with ONLY one worker
 		float maxTime = GameController.deadlineMax / weight;
-		
+		maxTime -= 6.0f;
 		// minTime is then divided up amongst the sub tasks
 		float minTime = maxTime;
 		
 		// Set minimum task amounts, in seconds
-		minTime -= 6.0f;
+		//minTime -= 6.0f;
 		programmingReq += 2.0f;
 		artReq += 2.0f;
 		soundReq += 2.0f;
@@ -48,7 +48,7 @@ public class Task
 			
 			// Generate an amount based on percent, meaning that if the player has 4 programmers and 1 artist,
 			// the artist won't have as much work as the programmers
-			amount = Random.Range(0, percent * maxTime);
+			amount = Random.Range(0, percent * maxTime * 0.6f);
 			if(amount < minTime)
 			{
 				minTime -= amount;

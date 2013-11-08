@@ -76,6 +76,8 @@ public class Worker
 				case SnapTargetType.Workstation:
 					AdjustFrustration(GameController.INCREASE * Time.deltaTime);
 					AdjustCommunication(GameController.SLIGHT_DECREASE * Time.deltaTime);
+				
+					if(roadblocked) AdjustFrustration(GameController.INCREASE * Time.deltaTime);
 					break;
 			}
 		}
@@ -84,7 +86,7 @@ public class Worker
 		if(AtWorkstation())
 		{
 			secondCounter -= Time.deltaTime;
-			clickCounter -= Time.deltaTime;
+			//clickCounter -= Time.deltaTime;
 			if(secondCounter <= 0)
 			{
 				if(!roadblocked)
@@ -111,7 +113,11 @@ public class Worker
 	private void RemoveRoadblock()
 	{
 		roadblocked = false;
-		if(roadblockParticle != null) roadblockParticle.Stop();
+		if(roadblockParticle != null) 
+		{
+			roadblockParticle.Stop();
+			roadblockParticle.Clear();
+		}
 	}
 	
 	/////////////////////////// STATS //////////////////////////////
@@ -182,8 +188,16 @@ public class Worker
 	
 	public void MouseClick()
 	{
-		Debug.Log("You've clicked me, oh my.");
-		RemoveRoadblock();
+		if(roadblocked)
+		{
+			Debug.Log("You've clicked me, oh my." + clickCounter);
+			clickCounter++;
+			if(clickCounter > 5) 
+			{
+				RemoveRoadblock();
+				clickCounter = 0;
+			}
+		}
 	}
 	
 	/////////////////////////// SNAP TARGET //////////////////////////////
