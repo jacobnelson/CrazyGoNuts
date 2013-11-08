@@ -66,6 +66,10 @@ public class GameController : MonoBehaviour
 	private Task currentTask = null;
 	private int currentTaskIndex = 0;
 	
+	// Meeting
+	//private Meeting meeting = null;
+	bool tab = false;
+	
 	// Milestones
 	private List<Milestone> milestones = new List<Milestone>();
 	//private Task currentTask = null;
@@ -110,6 +114,9 @@ public class GameController : MonoBehaviour
 		
 		// Deadline
 		UpdateDeadline();
+		
+		if(Input.GetKey(KeyCode.Tab)) tab = true;
+		else tab = false;
 	}
 	
 	void OnGUI()
@@ -120,7 +127,7 @@ public class GameController : MonoBehaviour
 		DrawCompletionMeter();
 		
 		// StatsAnalysis
-		StatsAnalysis.OnGUI();
+		if(tab)StatsAnalysis.OnGUI();
 		
 		// Temp for Debug
 		GUI.Label( new Rect(10, 24, 256, 24), "completion: " + completion.ToString("f2") + " (+" + lastTotalProductivity.ToString("f2") + ")");
@@ -331,6 +338,9 @@ public class GameController : MonoBehaviour
 			
 			// Add to StatsAnalysis.productivityPerSec
 			StatsAnalysis.productivityPerSec.Add( new GraphEntry(totalProductivity, deadlineCurrent));
+			
+			StatsAnalysis.deadline.Add( new GraphEntry(0, deadlineCurrent));
+			StatsAnalysis.completion.Add( new GraphEntry(completion - (deadlineCurrent / deadlineMax * 100), deadlineCurrent));
 			
 			ResetProductivityRates();
 			productivityCounter = 0f;
