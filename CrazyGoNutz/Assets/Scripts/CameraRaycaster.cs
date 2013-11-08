@@ -3,6 +3,12 @@ using System.Collections;
 
 public class CameraRaycaster : MonoBehaviour 
 {
+	/*
+		This Script is placed on the Main Camera Object and handles Mouse Input
+	 		-Dragging and Dropping of Workers
+	 		-MouseOver
+	 		-MouseClickInput
+	 */
 	GameController gameController = null;
 	
 	

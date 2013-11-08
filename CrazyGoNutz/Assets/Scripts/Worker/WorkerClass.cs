@@ -3,6 +3,7 @@ using System.Collections;
 
 /*
 	Workers are the characters that perform work of various jobs
+	-This is the Worker class, for the Monobehavior, see WorkerScript.cs
 	
 	Stats:
 	-Performance
@@ -18,16 +19,16 @@ using System.Collections;
 public class Worker
 {	
 	string name = "workername";	
-	WorkerType workerType;
+	WorkerType workerType;						// Artist, AudioDesigner, or Programmer
 	bool mouseOver = false;
-	public GameObject gameObject = null;
-	ParticleSystem roadblockParticle = null;
+	public GameObject gameObject = null;		// Associated GameObject within the Scene
+	ParticleSystem roadblockParticle = null;	// ParticleSystem used to show Roadblock
 	
-	float productivity = 100;	// Ratio of communication AND frustration
-	float communication = 100;	// Descreased by WORKING, Increased by CONFERRING
-	float frustration = 1;	// Increased by WORKING and FAILURE, Descreased by RECREATION
+	float productivity = 100;		// Ratio of communication AND frustration
+	float communication = 100;		// Descreased by WORKING, Increased by CONFERRING
+	float frustration = 1;			// Increased by WORKING and FAILURE, Descreased by RECREATION
 	
-	SnapTarget lastSnapTarget = null;
+	SnapTarget lastSnapTarget = null;		// if currentSnapTarget is null, workers snap back to lastSnapTarget
 	SnapTarget currentSnapTarget = null;
 	
 	// Roadblock
@@ -43,7 +44,7 @@ public class Worker
 		roadblockParticle = gameObject.GetComponentInChildren<ParticleSystem>();
 		if(roadblockParticle != null) roadblockParticle.Stop();
 		
-		switch(workerType)
+		switch(workerType)	// Change material color based on WorkerType
 		{
 			case WorkerType.Artist:
 				gameObject.renderer.material.color = Color.cyan;
@@ -131,7 +132,7 @@ public class Worker
 	}
 	private void CalculateProductivity()
 	{
-		productivity = 100 - (frustration) + (communication - 50);
+		productivity = 100 - (frustration) + (communication - 50);		//TODO: Change this ratio.
 		if(productivity < 1) productivity = 1;
 		if(productivity > 100) productivity = 100;
 	}

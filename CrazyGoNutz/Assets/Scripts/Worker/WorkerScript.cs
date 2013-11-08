@@ -3,6 +3,7 @@ using System.Collections;
 
 /*
 	WorkerScript goes on the worker GameObjects within the scene
+	-This is the MonoBehavior attached to the GameObject within the Scene, for the Worker class, see WorkerClass.cs
 	
 	-Animator
 	-Handles animation
@@ -11,34 +12,13 @@ using System.Collections;
 
 public class WorkerScript : MonoBehaviour 
 {
-	// Worker
+	// Worker Class Instance
 	Worker worker = null;
 	
-	//private bool mouseOver = false;
-	
-	// Use this for initialization
-	void Start () 
-	{
-	
-	}
-	
-	// Update is called once per frame
-	void Update ()
-	{
-		/*if(gameObject.layer == 2)
-		{
-			if(worker.GetSnapTarget() == null) gameObject.layer = 0;
-		}*/
-	}
 	
 	/////////////////////////// GET VARS //////////////////////////////
-	
-	/*public Vector3 GetPosition()
-	{
-		return transform.position;
-	}*/
 
-	public Worker GetWorker()	// Returns the Worker Class Instance
+	public Worker GetWorker()				// Returns the Worker Class Instance
 	{
 		return worker;
 	}

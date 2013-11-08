@@ -9,7 +9,7 @@ public class SnapTarget
 	
 	private bool empty = true;
 	public Worker currentWorker = null;
-	public GameObject workStation = null;
+	public GameObject workStation = null;	// Associated GameObject within the Scene
 	
 	private bool mouseOver = false;
 	

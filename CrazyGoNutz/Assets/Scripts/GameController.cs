@@ -5,11 +5,13 @@ using System.Collections.Generic;
 public class GameController : MonoBehaviour 
 {
 	/*
-	 -Hold List of Workers
-	 -Handles Current Task
-	 -Handles Completion Meter
-	 -Spawns Roadblocks?
-	 -Handles GUI
+		This Script is placed on the GameController and handles Game Flow
+	 		-Holds static vars
+	 		-Holds consts
+	 		-Handles Completion
+	 		-Handles Deadline
+	 		-Handles Milestones
+	 		-Handles GUI
 	 */
 	
 	// Statics
@@ -38,10 +40,20 @@ public class GameController : MonoBehaviour
 	public const float DECREASE = -2.0f;
 	public const float SLIGHT_DECREASE = -0.25f;
 	
-	private const float WORK_RATE = 1.0f;
+	public const float WORK_RATE = 0.45f;	// How much work a Worker does per second
 	
 	// Productivity Per Sec
+	private float totalProductivity = 0f;
+	private float artProductivity = 0f;
+	private float programmingProductivity = 0f;
+	private float soundProductivity = 0f;
 	
+	private float lastTotalProductivity = 0f;
+	private float lastArtProductivity = 0f;
+	private float lastProgrammingProductivity = 0f;
+	private float lastSoundProductivity = 0f;
+	
+	private float productivityCounter = 0f;	// Counts per sec
 	
 	// Completion Bar
 	private float completion = 0.0f;				// TODO: This is only temporary
@@ -79,12 +91,12 @@ public class GameController : MonoBehaviour
 		
 		// Create Tasks
 		GenerateTaskList();
-
 	}
 	
 	// Update is called once per frame
 	void Update () 
 	{
+		UpdateProductivityRates();
 		UpdateWorkers();	// Tells workers to do work, and other workstation stuff
 		
 		// Update Task
@@ -106,16 +118,21 @@ public class GameController : MonoBehaviour
 		
 		// Completion Meter
 		DrawCompletionMeter();
-
+		
+		// StatsAnalysis
+		StatsAnalysis.OnGUI();
 		
 		// Temp for Debug
-		GUI.Label( new Rect(10, 24, 256, 24), "completion: " + completion);
+		GUI.Label( new Rect(10, 24, 256, 24), "completion: " + completion.ToString("f2") + " (+" + lastTotalProductivity.ToString("f2") + ")");
 		GUI.Label( new Rect(10, 48, 256, 24), "deadline: " + deadlineCurrent.ToString("f2") + " / " + gameLengthMax);
 		if(currentTask != null)
 		{
-			GUI.Label( new Rect(10, 72, 256, 24), "currentTask Programming: " + currentTask.programming.ToString("f2") + " / " + currentTask.programmingReq.ToString("f2"));
-			GUI.Label( new Rect(10, 96, 256, 24), "currentTask Art: " + currentTask.art.ToString("f2") + " / " + currentTask.artReq.ToString("f2"));
-			GUI.Label( new Rect(10, 120, 256, 24), "currentTask Sound: " + currentTask.sound.ToString("f2") + " / " + currentTask.soundReq.ToString("f2"));
+			string text = "currentTask Programming: " + currentTask.programming.ToString("f2") + " / " + currentTask.programmingReq.ToString("f2") + " (+" + lastProgrammingProductivity.ToString("f2") + ")";
+			GUI.Label( new Rect(10, 72, 512, 24), text);
+			text = "currentTask Art: " + currentTask.art.ToString("f2") + " / " + currentTask.artReq.ToString("f2") + " (+" + lastArtProductivity.ToString("f2") + ")";
+			GUI.Label( new Rect(10, 96, 512, 24), text);
+			text = "currentTask Sound: " + currentTask.sound.ToString("f2") + " / " + currentTask.soundReq.ToString("f2") + " (+" + lastSoundProductivity.ToString("f2") + ")";
+			GUI.Label( new Rect(10, 120, 512, 24), text);
 		}
 		
 		// Debug mouseOverWorker stats
@@ -127,6 +144,8 @@ public class GameController : MonoBehaviour
 			GUI.Label( new Rect(Screen.width - 256, Screen.height - 48, 256, 24), "Frustration: " + worker.GetFrustration());
 			GUI.Label( new Rect(Screen.width - 256, Screen.height - 24, 256, 24), "Productivity: " + worker.GetProductivity());
 		}
+		
+		//Drawing.DrawLine( new Vector2(50,50), new Vector2(50,250), 2f);
 	}
 	
 	/////////////////////////// UPDATE WORKERS //////////////////////////////
@@ -169,8 +188,16 @@ public class GameController : MonoBehaviour
 		}*/
 	}
 	
-	private void GenerateTaskList()
+	private void GenerateTaskList()	// Generate a List of Tasks with random Weights
 	{
+		/*
+			How Tasks are Generated
+			
+			- First, we assume that a project is percent based, meaning 100% is completed.
+			- Then, we divide 100% into chunks of 5%-15%, meaning there will be between 7 to 20 Tasks.
+			- When a task is created, we pass it's weight into it. Then we divid this weight by deadlineMax(the length of the game)
+				 to find how many secs it will take to complete.
+		*/
 		float totalCompletion = 100;
 		float currentPos = 0;
 		while(totalCompletion > 0)
@@ -207,19 +234,7 @@ public class GameController : MonoBehaviour
 		
 		currentTask.WorkOn(type, workamount);
 		
-		/*switch(type)
-		{
-			case WorkerType.Artist:
-				currentTaskArt += 
-				
-				break;
-			case WorkerType.Programmer:
-				currentTaskProgramming += productivity * WORK_RATE * Time.deltaTime;
-				break;
-			case WorkerType.AudioDesigner:
-				
-				break;
-		}*/
+		AdjustProductivityRates(type, workamount);
 	}
 	
 	/////////////////////////// COMPLETION METER //////////////////////////////
@@ -236,9 +251,16 @@ public class GameController : MonoBehaviour
 	
 	/////////////////////////// CHECK MILESTONES //////////////////////////////
 	
-	private void CheckMilestones()
+	private void CheckMilestones()	// Check if a Milestone is Achieved or Failed
 	{
-		foreach(Milestone milestone in milestones) if(!milestone.Complete()) milestone.Check(completion, ((float)deadlineCurrent / (float)deadlineMax) * 100);
+		foreach(Milestone milestone in milestones) 
+		{
+			if(!milestone.Complete()) 
+			{
+				milestone.Check(completion, ((float)deadlineCurrent / (float)deadlineMax) * 100);
+				if(milestone.Complete() && milestone.Failed()) {}	// Spawn a Meeting
+			}
+		}
 	}
 	
 	/////////////////////////// DRAW COMPLETION METER AND CURRENT TASK //////////////////////////////
@@ -293,6 +315,49 @@ public class GameController : MonoBehaviour
 	private void UpdateDeadline()
 	{
 		deadlineCurrent += Time.deltaTime;
+	}
+	
+	/////////////////////////// PRODUCTIVITY RATES //////////////////////////////
+	
+	private void UpdateProductivityRates()
+	{
+		productivityCounter += Time.deltaTime;
+		if(productivityCounter > 1f)
+		{
+			lastTotalProductivity = totalProductivity;
+			lastArtProductivity = artProductivity;
+			lastProgrammingProductivity = programmingProductivity;
+			lastSoundProductivity = soundProductivity;
+			
+			// Add to StatsAnalysis.productivityPerSec
+			StatsAnalysis.productivityPerSec.Add( new GraphEntry(totalProductivity, deadlineCurrent));
+			
+			ResetProductivityRates();
+			productivityCounter = 0f;
+		}
+	}
+	private void ResetProductivityRates()
+	{
+		totalProductivity = 0;
+		artProductivity = 0;
+		programmingProductivity = 0;
+		soundProductivity = 0;
+	}
+	private void AdjustProductivityRates(WorkerType type, float amount)
+	{
+		switch(type)
+		{
+			case WorkerType.Artist:
+				artProductivity += amount;
+				break;
+			case WorkerType.Programmer:
+				programmingProductivity += amount;
+				break;
+			case WorkerType.AudioDesigner:
+				soundProductivity += amount;
+				break;
+		}
+		totalProductivity += amount;
 	}
 	
 	/////////////////////////// MOUSE INPUT //////////////////////////////
