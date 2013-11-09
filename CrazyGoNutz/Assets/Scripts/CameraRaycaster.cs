@@ -224,7 +224,7 @@ public class CameraRaycaster : MonoBehaviour
 					dragObject.EndDrag(mouseOverSnapTarget);
 				}
 			}
-			else if(mouseOverWorker != dragObject)
+			else if(mouseOverWorker != dragObject && mouseOverWorker != null)
 			{
 				DropOnWorker(dragObject, mouseOverWorker);
 				dragObject.EndDrag(null);

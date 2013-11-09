@@ -47,8 +47,10 @@ public class GameController : MonoBehaviour
 	public const float SLIGHT_DECREASE = -0.25f;
 	
 	public const float WORK_RATE = 0.6f;	// How much work a Worker does per second
+	public const float TARGET_WORK_PERCENTAGE = 0.2f;	// Percentage of work capacity needed to keep up with deadline
 		
 	public const float MILESTONE_FRUSTRATION_REDUCTION = -10.0f;
+	public const float MEETING_FRUSTRATION_REDUCTION = -30.0f;
 	public const float MEETING_COMMUNICATION_INCREASE = 20.0f;
 	
 	// Productivity Per Sec
@@ -160,7 +162,8 @@ public class GameController : MonoBehaviour
 		if(tab)StatsAnalysis.OnGUI();
 		
 		// Temp for Debug
-		GUI.Label( new Rect(10, 24, 256, 24), "completion: " + completion.ToString("f2") + " (+" + lastTotalProductivity.ToString("f2") + ")");
+		string avgProdNeeded = " (" + (WORK_RATE * TotalWorkers * TARGET_WORK_PERCENTAGE).ToString("f2") + ")";
+		GUI.Label( new Rect(10, 24, 256, 24), "completion: " + completion.ToString("f2") + " (+" + lastTotalProductivity.ToString("f2") + ")" + avgProdNeeded);
 		GUI.Label( new Rect(10, 48, 256, 24), "deadline: " + deadlineCurrent.ToString("f2") + " / " + gameLengthMax);
 		if(currentTask != null)
 		{
@@ -311,7 +314,7 @@ public class GameController : MonoBehaviour
 	{
 		if(meeting != null && meeting.completion >= meeting.completionMax)
 		{
-			ReduceGroupFrustration(MILESTONE_FRUSTRATION_REDUCTION);
+			ReduceGroupFrustration(MEETING_FRUSTRATION_REDUCTION);
 			AdjustGroupCommunication(MEETING_COMMUNICATION_INCREASE);
 			meeting = null;
 		}
@@ -346,7 +349,7 @@ public class GameController : MonoBehaviour
 					if(milestone.Achieved())  // Reduce Frustration, 25% chance for Meeting?
 					{ 
 						ReduceGroupFrustration(MILESTONE_FRUSTRATION_REDUCTION); 
-						if(Random.Range(0,100) < 25f) SpawnMeeting();
+						if(Random.Range(0,100) < 25) SpawnMeeting();
 					}	
 				}
 			}

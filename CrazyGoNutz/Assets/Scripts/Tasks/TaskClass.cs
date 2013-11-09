@@ -22,23 +22,26 @@ public class Task
 		
 		// Task weight is the percent of the total project, currently 5%-15%
 		// GameController.deadlineMax is the number of seconds it takes for the deadline to reach the end, thus causing the lose state
-		// GameController.deadlineMax / weight is fastest possible time a task can be completed with ONLY one worker
-		float maxTime = GameController.deadlineMax / weight;
-		maxTime -= 6.0f;
+		// maxTime is the fastest amount of time a task can take with all workers working at full productivity
+		float maxTime = GameController.deadlineMax / weight * (GameController.WORK_RATE * GameController.TotalWorkers);
+		
+		// Since it's not possible for all workers to be working at once at their full productivity, we adjust this number so the task is possible
+		maxTime *= GameController.TARGET_WORK_PERCENTAGE;	// at 0.2f, it means you need to work at at least 20% capacity to win
+		
 		// minTime is then divided up amongst the sub tasks
 		float minTime = maxTime;
 		
-		// Set minimum task amounts, in seconds
-		//minTime -= 6.0f;
-		programmingReq += 2.0f;
-		artReq += 2.0f;
-		soundReq += 2.0f;
+		// Set minimum sub task amounts, so each sub task has at least some work
+		programmingReq += (float)GameController.Programmers;
+		artReq += (float)GameController.Artists;
+		soundReq += (float)GameController.AudioDesigners;
+		minTime -= (programmingReq + artReq + soundReq);
 		
-		// Divid up the leftovers, based on job amounts
+		// Divid up the leftovers by interating through the jobs and dividing up the minTime amoungst the sub tasks
 		int counter = 0;
-		while(minTime > 0 && counter < 10)
+		int job = 0;	// itterate through jobs using this
+		while(minTime > 0 && counter < 100)
 		{
-			int job = (int)Random.Range(0,3);
 			float amount = 0;
 			float percent = 0;
 			
@@ -48,8 +51,10 @@ public class Task
 			
 			// Generate an amount based on percent, meaning that if the player has 4 programmers and 1 artist,
 			// the artist won't have as much work as the programmers
-			amount = Random.Range(0, percent * maxTime);
-			amount *= 0.6f;
+			amount = Random.Range(0, percent);	// Get a random number from 0 to percent
+			
+			amount *= maxTime;	// Set amount to a percentage of the maxTime
+			
 			if(amount < minTime)
 			{
 				minTime -= amount;
@@ -65,18 +70,9 @@ public class Task
 			else if(job == 2) soundReq += amount;
 			
 			counter++;
+			job++;
+			if(job > 2) job = 0;
 		}
-		
-		// Inflate Requirements
-		// Used to multiply current requirements by a random number between 1 and Number of Workers for a given Job
-		//programmingReq *= Random.Range(1, (float)GameController.Programmers);
-		//artReq *= Random.Range(1, (float)GameController.Artists);
-		//soundReq *= Random.Range(1, (float)GameController.AudioDesigners);
-		
-		// Adjust Requirements based on WORK_RATE
-		//programmingReq *= GameController.WORK_RATE * 2.0f;
-		//artReq *= GameController.WORK_RATE * 2.0f;
-		//soundReq *= GameController.WORK_RATE * 2.0f;
 	}
 	
 	/////////////////////////// UPDATE //////////////////////////////
