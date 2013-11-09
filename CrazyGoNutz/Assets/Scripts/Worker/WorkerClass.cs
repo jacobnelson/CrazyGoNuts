@@ -18,7 +18,7 @@ using System.Collections;
 
 public class Worker
 {	
-	string name = "workername";	
+	public string name = "workername";	
 	WorkerType workerType;						// Artist, AudioDesigner, or Programmer
 	bool mouseOver = false;
 	public GameObject gameObject = null;		// Associated GameObject within the Scene
@@ -110,7 +110,7 @@ public class Worker
 		roadblocked = true;
 		if(roadblockParticle != null) roadblockParticle.Play();
 	}
-	private void RemoveRoadblock()
+	public void RemoveRoadblock()
 	{
 		roadblocked = false;
 		if(roadblockParticle != null) 
@@ -209,6 +209,14 @@ public class Worker
 	public bool AtWorkstation()
 	{
 		return (currentSnapTarget != null && currentSnapTarget.GetType() == SnapTargetType.Workstation);
+	}
+	public bool InConferenceRoom()
+	{
+		return (currentSnapTarget != null && currentSnapTarget.GetType() == SnapTargetType.Conference);
+	}
+	public bool InRecreationRoom()
+	{
+		return (currentSnapTarget != null && currentSnapTarget.GetType() == SnapTargetType.Recreation);
 	}
 	
 	/////////////////////////// DRAG //////////////////////////////

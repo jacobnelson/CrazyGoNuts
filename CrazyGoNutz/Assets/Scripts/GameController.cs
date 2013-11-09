@@ -23,16 +23,22 @@ public class GameController : MonoBehaviour
 	static public int AudioDesigners = 0;
 	static public int TotalWorkers = 0;
 	
-	static public float deadlineMax = 480f;
+	static public float deadlineMax = 840f;
 	
 	// Component Reference
 	CameraRaycaster cameraRaycaster = null;
 	
+	// Object Reference
+	GameObject ConferenceRoomObj = null;
+	Vector3 ConferenceRoomPos = new Vector3();
+	
 	// Worker Prefab
 	public GameObject workerPrefab = null;
 	
-	// MouseOver
-	//GameObject mouseOverWorker = null;
+	// Number of Workers per Room
+	private int workersInWorkroom = 0;
+	private int workersInRecreation = 0;
+	private int workersInConference = 0;
 	
 	// Ratios and Rates
 	public const float INCREASE = 1.0f;
@@ -43,6 +49,7 @@ public class GameController : MonoBehaviour
 	public const float WORK_RATE = 0.6f;	// How much work a Worker does per second
 		
 	public const float MILESTONE_FRUSTRATION_REDUCTION = -10.0f;
+	public const float MEETING_COMMUNICATION_INCREASE = 20.0f;
 	
 	// Productivity Per Sec
 	private float totalProductivity = 0f;
@@ -69,7 +76,7 @@ public class GameController : MonoBehaviour
 	private int currentTaskIndex = 0;
 	
 	// Meeting
-	//private Meeting meeting = null;
+	private Meeting meeting = null;
 	bool tab = false;
 	
 	// Milestones
@@ -78,11 +85,14 @@ public class GameController : MonoBehaviour
 	//private int currentTaskIndex = 0;
 	
 	// Deadline
-	private float gameLengthMax = 480f;	// total length of game before losing, in seconds	// 8min?
+	private float gameLengthMax = 840f;	// total length of game before losing, in seconds	// 8min?, 14min? //TODO: Adjust this.
 	private float deadlineCurrent = 0f;	// current length of the game
 	
 	// Textures
 	public Texture2D solidColorTex = null;
+	
+	// PerSecond Counter
+	private float counter = 0;
 	
 	// Use this for initialization
 	void Start () 
@@ -92,18 +102,32 @@ public class GameController : MonoBehaviour
 		deadlineMax = gameLengthMax;
 		
 		// Create Worker GameObjects
-		SpawnWorkers();
+		if(workers.Count == 0) SpawnWorkers();
 		CountWorkers();
 		
 		// Create Tasks
 		GenerateTaskList();
+		
+		// Find Rooms
+		ConferenceRoomObj = GameObject.Find("ConferenceRoom");
+		
+		meeting = new Meeting(50f * WORK_RATE);
 	}
 	
 	// Update is called once per frame
 	void Update () 
 	{
 		UpdateProductivityRates();
-		UpdateWorkers();	// Tells workers to do work, and other workstation stuff
+		
+		// Update and Count Workers Per Room
+		UpdateWorkers();			// Tells workers to do work, and other workstation stuff
+		
+		// Updates once per second
+		counter += Time.deltaTime;
+		if(counter >= 1f)
+		{
+			CountWorkersPerRoom();		// Finds out which room the workers are in
+		}
 		
 		// Update Task
 		UpdateCurrentTask();
@@ -127,6 +151,10 @@ public class GameController : MonoBehaviour
 		
 		// Completion Meter
 		DrawCompletionMeter();
+		
+		// Meeting
+		DrawMeetingMeter();
+		CheckMeeting();
 		
 		// StatsAnalysis
 		if(tab)StatsAnalysis.OnGUI();
@@ -167,6 +195,10 @@ public class GameController : MonoBehaviour
 			if(worker.AtWorkstation() && !worker.Roadblocked())
 			{
 				WorkOnCurrentTask( worker.GetWorkerType(), worker.ProductivityPercent() );	// If worker at a workerstation, add to current task
+			}
+			else if(worker.InConferenceRoom() && workersInConference > 1)	// If this worker in conference and not alone, add to meeting.completion
+			{
+				if(meeting != null) WorkOnCurrentMeeting( WORK_RATE * Time.deltaTime );
 			}
 		}
 	}
@@ -230,9 +262,10 @@ public class GameController : MonoBehaviour
 			}
 			
 			currentPos += weight;
+			Debug.Log("GenerateTaskList -> Task" + taskList.Count + " weight is " + weight);
 		}
 		
-		Debug.Log("GenerateTaskList -> Count is " + taskList.Count + ", with " + milestones.Count + "milestones");
+		//Debug.Log("GenerateTaskList -> Count is " + taskList.Count + ", with " + milestones.Count + "milestones");
 	}
 	
 	private void WorkOnCurrentTask(WorkerType type, float productivity)
@@ -246,14 +279,54 @@ public class GameController : MonoBehaviour
 		AdjustProductivityRates(type, workamount);
 	}
 	
+	/////////////////////////// MEETING //////////////////////////////
+	
+	private void DrawMeetingMeter()
+	{
+		if(meeting != null)
+		{
+			// Get World Pos of ConferenceRoom to draw gui near it, this is temporary.
+			if(ConferenceRoomPos == Vector3.zero) ConferenceRoomPos = Camera.main.WorldToScreenPoint(ConferenceRoomObj.transform.position);
+			
+			Rect meetingRect = new Rect(ConferenceRoomPos.x, Screen.height - ConferenceRoomPos.y, 128f, 10f);
+			GUI.Label( new Rect(meetingRect.x, meetingRect.y - 18, meetingRect.width, 24), "Meeting");
+			
+			// Draw Meter BG
+			GUI.color = Color.grey;
+			GUI.DrawTexture( meetingRect, solidColorTex);
+			// Draw Meter
+			GUI.color = Color.cyan;
+			meetingRect.width = (meeting.completion / meeting.completionMax) * meetingRect.width;
+			GUI.DrawTexture( meetingRect, solidColorTex);
+			
+			GUI.color = Color.white;
+		}
+	}
+	
+	private void WorkOnCurrentMeeting(float amount)
+	{
+		meeting.completion += amount;
+	}
+	private void CheckMeeting()
+	{
+		if(meeting != null && meeting.completion >= meeting.completionMax)
+		{
+			ReduceGroupFrustration(MILESTONE_FRUSTRATION_REDUCTION);
+			AdjustGroupCommunication(MEETING_COMMUNICATION_INCREASE);
+			meeting = null;
+		}
+	}
+	private void SpawnMeeting()
+	{
+		meeting = new Meeting(50f * WORK_RATE);		//TODO: Adjust this as needed.
+	}
+	
 	/////////////////////////// COMPLETION METER //////////////////////////////
 	
 	private void CalculateCompletion()
 	{
 		completion = 0;
 		foreach(Task task in taskList) completion += task.GetCompletionAmount();	// Gets task completion percent * taskWeight
-		
-		//completion /= taskList.Count;
 		
 		if(completion >= 100) {   } //YOU WIN!! 
 	}
@@ -269,8 +342,12 @@ public class GameController : MonoBehaviour
 				milestone.Check(completion, ((float)deadlineCurrent / (float)deadlineMax) * 100);
 				if(milestone.Complete())
 				{
-					if(milestone.Failed()) {}	// Spawn a Meeting
-					if(milestone.Achieved()) { ReduceGroupFrustration(MILESTONE_FRUSTRATION_REDUCTION); }	// Reduce Frustration
+					if(milestone.Failed()) { SpawnMeeting(); }	// Spawn a Meeting
+					if(milestone.Achieved())  // Reduce Frustration, 25% chance for Meeting?
+					{ 
+						ReduceGroupFrustration(MILESTONE_FRUSTRATION_REDUCTION); 
+						if(Random.Range(0,100) < 25f) SpawnMeeting();
+					}	
 				}
 			}
 		}
@@ -288,12 +365,6 @@ public class GameController : MonoBehaviour
 		GUI.DrawTexture( completionBarRect, solidColorTex);
 		
 		// Draw Milestones
-		/*for(int i = 0; i < taskList.Count; i++)
-		{
-			GUI.color = Color.black;
-			Rect rect = new Rect((taskList[i].GetTaskWeight() / 100) * (i + 1) * Screen.width,0,2,16);	// TODO: Fix this.
-			GUI.DrawTexture( rect, solidColorTex);
-		}*/
 		for(int i = 0; i < milestones.Count; i++)
 		{
 			if(!milestones[i].Complete()) GUI.color = Color.white;
@@ -421,6 +492,10 @@ public class GameController : MonoBehaviour
 	{
 		foreach(Worker worker in workers) worker.AdjustFrustration(howMuch);
 	}
+	private void AdjustGroupCommunication(float howMuch)
+	{
+		foreach(Worker worker in workers) worker.AdjustCommunication(howMuch);
+	}
 	
 	/////////////////////////// WORKER LIST //////////////////////////////
 	
@@ -457,6 +532,20 @@ public class GameController : MonoBehaviour
 		TotalWorkers = workers.Count;
 		
 		Debug.Log("Workers: " + workers.Count + "; Programmers " + Programmers + "; Artists " + Artists + "; AudioDesigners " + AudioDesigners);
+	}
+	private void CountWorkersPerRoom()
+	{
+		workersInWorkroom = 0;
+		workersInConference = 0;
+		workersInRecreation = 0;
+		foreach(Worker worker in workers)
+		{
+			if(worker.AtWorkstation()) workersInWorkroom++;
+			else if(worker.InConferenceRoom()) workersInConference++;
+			else if(worker.InRecreationRoom()) workersInRecreation++;
+		}
+		
+		//Debug.Log("Workers at Workstations " + workersInWorkroom + "; In Conference " + workersInConference + "; In Recreation " + workersInRecreation);
 	}
 	
 	/////////////////////////// SNAPTARGET LIST //////////////////////////////

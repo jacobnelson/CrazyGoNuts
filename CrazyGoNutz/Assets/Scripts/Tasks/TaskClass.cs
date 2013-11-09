@@ -48,7 +48,8 @@ public class Task
 			
 			// Generate an amount based on percent, meaning that if the player has 4 programmers and 1 artist,
 			// the artist won't have as much work as the programmers
-			amount = Random.Range(0, percent * maxTime * 0.6f);
+			amount = Random.Range(0, percent * maxTime);
+			amount *= 0.6f;
 			if(amount < minTime)
 			{
 				minTime -= amount;

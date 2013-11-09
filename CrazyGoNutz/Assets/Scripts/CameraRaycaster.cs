@@ -224,6 +224,11 @@ public class CameraRaycaster : MonoBehaviour
 					dragObject.EndDrag(mouseOverSnapTarget);
 				}
 			}
+			else if(mouseOverWorker != dragObject)
+			{
+				DropOnWorker(dragObject, mouseOverWorker);
+				dragObject.EndDrag(null);
+			}
 			else dragObject.EndDrag(null);
 
 			dragObject = null;
@@ -235,6 +240,18 @@ public class CameraRaycaster : MonoBehaviour
 		SnapTarget openSnapTarget = GameController.FindOpenSnapTargetOfType( snapTarget.GetType() );
 		
 		dragObject.EndDrag(openSnapTarget);
+	}
+	
+	private void DropOnWorker(Worker droppedWorker, Worker targetWorker)
+	{
+		// By dropping one Worker onto another, you remove the Roadblock of the targetWorker, 
+		// but increase the frustration of the dropped Worker, as long as they are the same WorkerType
+		if(targetWorker.Roadblocked() && targetWorker.GetWorkerType() == droppedWorker.GetWorkerType())
+		{
+			targetWorker.RemoveRoadblock();
+			droppedWorker.AdjustFrustration(20f);
+		}
+		//Debug.Log("Dropped " + droppedWorker.name + " onto " + targetWorker.name);
 	}
 	
 }

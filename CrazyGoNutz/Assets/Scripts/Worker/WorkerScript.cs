@@ -25,5 +25,7 @@ public class WorkerScript : MonoBehaviour
 	public void SetWorker(Worker worker)	// Sets the Worker Class Instance
 	{
 		this.worker = worker;
+		worker.name = "Worker" + (int)Random.Range(0,1000);	//TODO: Temp for debug.
+		name = worker.name;
 	}
 }
