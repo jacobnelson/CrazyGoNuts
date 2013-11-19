@@ -67,10 +67,15 @@ public class Worker
 			switch(type)
 			{
 				case SnapTargetType.Conference:
-					AdjustCommunication(GameController.INCREASE * Time.deltaTime);
+					if(GameController.WorkersInConference > 1)
+					{
+						AdjustCommunication(GameController.INCREASE * Time.deltaTime);
+						if(roadblocked) RemoveRoadblock();
+					}
 					break;
 				case SnapTargetType.Recreation:
 					AdjustFrustration(GameController.DECREASE * Time.deltaTime);
+					AdjustFrustration(GameController.SLIGHT_DECREASE * (float)GameController.WorkersInRecreation * Time.deltaTime);	// More workers in RecRoom reduces frustration faster
 					AdjustCommunication(GameController.SLIGHT_INCREASE * Time.deltaTime);
 					break;
 				case SnapTargetType.Workstation:

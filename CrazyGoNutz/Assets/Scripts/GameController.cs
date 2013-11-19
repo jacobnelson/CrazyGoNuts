@@ -23,7 +23,7 @@ public class GameController : MonoBehaviour
 	static public int AudioDesigners = 0;
 	static public int TotalWorkers = 0;
 	
-	static public float deadlineMax = 840f;
+	
 	
 	// Component Reference
 	CameraRaycaster cameraRaycaster = null;
@@ -36,9 +36,9 @@ public class GameController : MonoBehaviour
 	public GameObject workerPrefab = null;
 	
 	// Number of Workers per Room
-	private int workersInWorkroom = 0;
-	private int workersInRecreation = 0;
-	private int workersInConference = 0;
+	static public int WorkersInWorkroom = 0;
+	static public int WorkersInRecreation = 0;
+	static public int WorkersInConference = 0;
 	
 	// Ratios and Rates
 	public const float INCREASE = 1.0f;
@@ -82,13 +82,20 @@ public class GameController : MonoBehaviour
 	bool tab = false;
 	
 	// Milestones
-	private List<Milestone> milestones = new List<Milestone>();
+	//private List<Milestone> milestones = new List<Milestone>();
+	static public List<Milestone> milestones = new List<Milestone>();
 	//private Task currentTask = null;
 	//private int currentTaskIndex = 0;
 	
 	// Deadline
-	private float gameLengthMax = 840f;	// total length of game before losing, in seconds	// 8min?, 14min? //TODO: Adjust this.
+	static public float deadlineMax = 840f;//840f; // total length of game before losing, in seconds	// 8min?, 14min? //TODO: Adjust this.	
 	private float deadlineCurrent = 0f;	// current length of the game
+	private float initialDeadlineDelay = 5f;	//in seconds
+	
+	// Team Badges
+	/*private TeamBadge badge01 = null;
+	private TeamBadge badge02 = null;
+	private TeamBadge badge03 = null;*/
 	
 	// Textures
 	public Texture2D solidColorTex = null;
@@ -101,7 +108,7 @@ public class GameController : MonoBehaviour
 	{
 		cameraRaycaster = Camera.main.GetComponent<CameraRaycaster>();
 		
-		deadlineMax = gameLengthMax;
+		//deadlineMax = gameLengthMax;
 		
 		// Create Worker GameObjects
 		if(workers.Count == 0) SpawnWorkers();
@@ -113,12 +120,16 @@ public class GameController : MonoBehaviour
 		// Find Rooms
 		ConferenceRoomObj = GameObject.Find("ConferenceRoom");
 		
-		meeting = new Meeting(50f * WORK_RATE);
+		// Create Team Badges
+		//CreateTeamBadges();
+		TeamBadge.CreateTeamBadges();
+		
+		//meeting = new Meeting(50f * WORK_RATE);
 	}
 	
 	// Update is called once per frame
 	void Update () 
-	{
+	{	
 		UpdateProductivityRates();
 		
 		// Update and Count Workers Per Room
@@ -161,10 +172,23 @@ public class GameController : MonoBehaviour
 		// StatsAnalysis
 		if(tab)StatsAnalysis.OnGUI();
 		
+		// Team Badges
+		//TeamBadge.DrawTeamBadges(new Vector2( (Screen.width  * 0.5f) - (TeamBadge.teamBadges.Count * 64f * 0.5f),64f), 64f,64f);
+		float badgesize = 48f;
+		TeamBadge.DrawTeamBadges(new Vector2( (Screen.width  * 0.5f) - (TeamBadge.teamBadges.Count * badgesize * 0.5f),badgesize), badgesize + 2f,badgesize);
+		
+		if(GUI.tooltip.Length > 0)
+		{
+			float height = GUI.tooltip.Length / 64f * 24f + 24f;
+			//GUI.Box(new Rect(Input.mousePosition.x + 16, Screen.height - Input.mousePosition.y, 352, 96), "", TeamBadgeTextures.textures.marqueeStyle);
+			GUI.Box(new Rect(Input.mousePosition.x + 16, Screen.height - Input.mousePosition.y, 352, height), "", TeamBadgeTextures.textures.marqueeStyle);
+			GUI.Label(new Rect(Input.mousePosition.x + 16, Screen.height - Input.mousePosition.y, 352, 96), GUI.tooltip);
+		}
+		
 		// Temp for Debug
 		string avgProdNeeded = " (" + (WORK_RATE * TotalWorkers * TARGET_WORK_PERCENTAGE).ToString("f2") + ")";
 		GUI.Label( new Rect(10, 24, 256, 24), "completion: " + completion.ToString("f2") + " (+" + lastTotalProductivity.ToString("f2") + ")" + avgProdNeeded);
-		GUI.Label( new Rect(10, 48, 256, 24), "deadline: " + deadlineCurrent.ToString("f2") + " / " + gameLengthMax);
+		GUI.Label( new Rect(10, 48, 256, 24), "deadline: " + deadlineCurrent.ToString("f2") + " / " + deadlineMax);
 		if(currentTask != null)
 		{
 			string text = "currentTask Programming: " + currentTask.programming.ToString("f2") + " / " + currentTask.programmingReq.ToString("f2") + " (+" + lastProgrammingProductivity.ToString("f2") + ")";
@@ -199,7 +223,7 @@ public class GameController : MonoBehaviour
 			{
 				WorkOnCurrentTask( worker.GetWorkerType(), worker.ProductivityPercent() );	// If worker at a workerstation, add to current task
 			}
-			else if(worker.InConferenceRoom() && workersInConference > 1)	// If this worker in conference and not alone, add to meeting.completion
+			else if(worker.InConferenceRoom() && WorkersInConference > 1)	// If this worker in conference and not alone, add to meeting.completion
 			{
 				if(meeting != null) WorkOnCurrentMeeting( WORK_RATE * Time.deltaTime );
 			}
@@ -316,6 +340,7 @@ public class GameController : MonoBehaviour
 		{
 			ReduceGroupFrustration(MEETING_FRUSTRATION_REDUCTION);
 			AdjustGroupCommunication(MEETING_COMMUNICATION_INCREASE);
+			StatsAnalysis.completedMeetings += 1;
 			meeting = null;
 		}
 	}
@@ -331,7 +356,11 @@ public class GameController : MonoBehaviour
 		completion = 0;
 		foreach(Task task in taskList) completion += task.GetCompletionAmount();	// Gets task completion percent * taskWeight
 		
-		if(completion >= 100) {   } //YOU WIN!! 
+		if(completion >= 100) //YOU WIN!! 
+		{ 
+			completion = 100;
+			EndGame(true);
+		} 
 	}
 	
 	/////////////////////////// CHECK MILESTONES //////////////////////////////
@@ -401,7 +430,25 @@ public class GameController : MonoBehaviour
 	
 	private void UpdateDeadline()
 	{
-		deadlineCurrent += Time.deltaTime;
+		initialDeadlineDelay -= Time.deltaTime;	// Delay before the deadline starts counting down
+		if(initialDeadlineDelay <= 0) deadlineCurrent += Time.deltaTime;
+		
+		if(deadlineCurrent >= deadlineMax) //YOU WIN!! 
+		{ 
+			deadlineCurrent = deadlineMax;
+			EndGame(false);
+		}
+	}
+	
+	/////////////////////////// END GAME //////////////////////////////
+	
+	private void EndGame(bool win)
+	{
+		StatsAnalysis.completionNum = completion;
+		StatsAnalysis.deadlineNum = deadlineCurrent;
+		StatsAnalysis.milestones = milestones;
+		Debug.Log("GameController.EndGame() -> Win " + win);
+		Application.LoadLevel("EndScene");
 	}
 	
 	/////////////////////////// PRODUCTIVITY RATES //////////////////////////////
@@ -538,14 +585,14 @@ public class GameController : MonoBehaviour
 	}
 	private void CountWorkersPerRoom()
 	{
-		workersInWorkroom = 0;
-		workersInConference = 0;
-		workersInRecreation = 0;
+		WorkersInWorkroom = 0;
+		WorkersInConference = 0;
+		WorkersInRecreation = 0;
 		foreach(Worker worker in workers)
 		{
-			if(worker.AtWorkstation()) workersInWorkroom++;
-			else if(worker.InConferenceRoom()) workersInConference++;
-			else if(worker.InRecreationRoom()) workersInRecreation++;
+			if(worker.AtWorkstation()) WorkersInWorkroom++;
+			else if(worker.InConferenceRoom()) WorkersInConference++;
+			else if(worker.InRecreationRoom()) WorkersInRecreation++;
 		}
 		
 		//Debug.Log("Workers at Workstations " + workersInWorkroom + "; In Conference " + workersInConference + "; In Recreation " + workersInRecreation);
