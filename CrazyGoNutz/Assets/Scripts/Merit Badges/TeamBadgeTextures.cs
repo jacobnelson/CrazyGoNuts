@@ -18,7 +18,7 @@ public class TeamBadgeTextures  : MonoBehaviour
 	public Texture2D texture03 = null;
 	public Texture2D textureOutline03 = null;
 	
-	void Start()
+	void Awake()
 	{
 		textures = this;
 	}
@@ -65,7 +65,7 @@ public class TeamBadge : MeritBadge				// These are only for the TEAM
 		{
 			TeamBadge badge = new TeamBadge(i);
 			teamBadges.Add(badge);
-			if(Random.Range(0,1f) > 0.5f) badge.completed = true;
+			if(Random.Range(0f,1f) > 0.5f) badge.completed = true;
 		}
 	}
 	

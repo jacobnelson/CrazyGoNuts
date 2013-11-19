@@ -24,17 +24,15 @@ public class CameraRaycaster : MonoBehaviour
 	Vector3 mousePos = Vector3.zero;
 	Vector3 lastMousePos = Vector3.zero;
 	GameObject mouseOverObject = null;
-	//GameObject mouseOverWorker = null;
 	public Worker mouseOverWorker = null;
 	SnapTarget mouseOverSnapTarget = null;
 	
 	// Drag and Drop Stuff
-	//GameObject dragObject = null;	// Ignores Raycasting
 	Worker dragObject = null;
 	
-	// Camera Bounds
+	// Selection Stuff
+	public Worker selectedworker = null;
 	
-	// Use this for initialization
 	void Start () 
 	{
 		gameController = GameObject.Find("GameController").GetComponent<GameController>();
@@ -77,15 +75,31 @@ public class CameraRaycaster : MonoBehaviour
 			if(clickedObject.CompareTag("SnapTarget") || clickedObject.layer == 8)
          	{
          		//Debug.Log("CameraRaycaster.MouseClickInput -> Clicked on 'SnapTarget' " + clickedObject.name + ".");
+				if(selectedworker != null)
+				{
+					selectedworker.SetSelected(false);
+					selectedworker = null;
+				}
          	}
 			else if(clickedObject.CompareTag("Worker"))
          	{
-         		//Debug.Log("CameraRaycaster.MouseClickInput -> Clicked on 'Worker' " + clickedObject.name + ".");
 				if(mouseOverWorker != null) mouseOverWorker.MouseClick();
+				if(selectedworker != null && selectedworker != mouseOverWorker)
+				{
+					selectedworker.SetSelected(false);
+					selectedworker = null;
+				}
+				selectedworker = mouseOverWorker;
+				if(selectedworker != null) selectedworker.SetSelected(true);
          	}
          	else
          	{
          		//Debug.Log("CameraRaycaster -> Clicked on " + clickedObject.name + ", has no effect.");
+				if(selectedworker != null)
+				{
+					selectedworker.SetSelected(false);
+					selectedworker = null;
+				}
          	}	
 		}
 		else if(Input.GetButton ("Fire1")) // Left Click down continuous 
@@ -249,7 +263,7 @@ public class CameraRaycaster : MonoBehaviour
 		if(targetWorker.Roadblocked() && targetWorker.GetWorkerType() == droppedWorker.GetWorkerType())
 		{
 			targetWorker.RemoveRoadblock();
-			droppedWorker.AdjustFrustration(20f);
+			//droppedWorker.AdjustFrustration(20f);
 		}
 		//Debug.Log("Dropped " + droppedWorker.name + " onto " + targetWorker.name);
 	}

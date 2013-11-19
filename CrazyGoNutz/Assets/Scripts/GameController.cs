@@ -100,6 +100,9 @@ public class GameController : MonoBehaviour
 	// Textures
 	public Texture2D solidColorTex = null;
 	
+	// GUIStyles
+	public GUIStyle mouseOverStyle;
+	
 	// PerSecond Counter
 	private float counter = 0;
 	
@@ -202,11 +205,31 @@ public class GameController : MonoBehaviour
 		// Debug mouseOverWorker stats
 		if(cameraRaycaster != null && cameraRaycaster.mouseOverWorker != null)
 		{
+			Vector2 offset = new Vector2(Screen.width - 320f, Screen.height - 256f);
 			Worker worker =  cameraRaycaster.mouseOverWorker;
-			GUI.Label( new Rect(Screen.width - 256, Screen.height - 86, 256, 24), "WorkerType: " + worker.GetWorkerType());
-			GUI.Label( new Rect(Screen.width - 256, Screen.height - 72, 256, 24), "Communication: " + worker.GetCommunication());
-			GUI.Label( new Rect(Screen.width - 256, Screen.height - 48, 256, 24), "Frustration: " + worker.GetFrustration());
-			GUI.Label( new Rect(Screen.width - 256, Screen.height - 24, 256, 24), "Productivity: " + worker.GetProductivity());
+			mouseOverStyle.fontSize = 24;
+			GUI.Label( new Rect(offset.x, offset.y, 256, 24), "" + worker.name, mouseOverStyle);
+			mouseOverStyle.fontSize = 20;
+			GUI.Label( new Rect(offset.x, offset.y + 32f, 256, 24), "" + worker.GetWorkerType(), mouseOverStyle);
+			float mood = worker.GetMood();
+			if(mood > 66f) GUI.DrawTexture( new Rect(offset.x + (320f * 0.5f - 64f),  offset.y + 64f, 64f, 64f), MoodTextures.textures.happygreen);
+			else if(mood <= 66f && mood > 33f) GUI.DrawTexture( new Rect(offset.x + (320f * 0.5f - 64f),  offset.y + 64f, 64f, 64f), MoodTextures.textures.neutralyellow);
+			else if(mood <= 33f) GUI.DrawTexture( new Rect(offset.x + (320f * 0.5f - 64f),  offset.y + 64f, 64f, 64f), MoodTextures.textures.angryred);
+			worker.DrawBadges(new Vector2(offset.x + (320f * 0.5f - 104f), Screen.height - 112f), 48f, 48f);
+		}
+		else if(cameraRaycaster != null && cameraRaycaster.selectedworker != null)
+		{
+			Vector2 offset = new Vector2(Screen.width - 320f, Screen.height - 256f);
+			Worker worker =  cameraRaycaster.selectedworker;
+			mouseOverStyle.fontSize = 24;
+			GUI.Label( new Rect(offset.x, offset.y, 256, 24), "" + worker.name, mouseOverStyle);
+			mouseOverStyle.fontSize = 20;
+			GUI.Label( new Rect(offset.x, offset.y + 32f, 256, 24), "" + worker.GetWorkerType(), mouseOverStyle);
+			float mood = worker.GetMood();
+			if(mood > 66f) GUI.DrawTexture( new Rect(offset.x + (320f * 0.5f - 64f),  offset.y + 64f, 64f, 64f), MoodTextures.textures.happygreen);
+			else if(mood <= 66f && mood > 33f) GUI.DrawTexture( new Rect(offset.x + (320f * 0.5f - 64f),  offset.y + 64f, 64f, 64f), MoodTextures.textures.neutralyellow);
+			else if(mood <= 33f) GUI.DrawTexture( new Rect(offset.x + (320f * 0.5f - 64f),  offset.y + 64f, 64f, 64f), MoodTextures.textures.angryred);
+			worker.DrawBadges(new Vector2(offset.x + (320f * 0.5f - 104f), Screen.height - 112f), 48f, 48f);
 		}
 		
 		//Drawing.DrawLine( new Vector2(50,50), new Vector2(50,250), 2f);
@@ -221,7 +244,7 @@ public class GameController : MonoBehaviour
 			worker.UpdateStats();	// Calc roadblock chance
 			if(worker.AtWorkstation() && !worker.Roadblocked())
 			{
-				WorkOnCurrentTask( worker.GetWorkerType(), worker.ProductivityPercent() );	// If worker at a workerstation, add to current task
+				WorkOnCurrentTask( worker.GetWorkerType(), worker.GetMood() * 0.01f );	// If worker at a workerstation, add to current task
 			}
 			else if(worker.InConferenceRoom() && WorkersInConference > 1)	// If this worker in conference and not alone, add to meeting.completion
 			{
@@ -540,11 +563,11 @@ public class GameController : MonoBehaviour
 	
 	private void ReduceGroupFrustration(float howMuch)
 	{
-		foreach(Worker worker in workers) worker.AdjustFrustration(howMuch);
+		foreach(Worker worker in workers) worker.AdjustMood(howMuch);
 	}
 	private void AdjustGroupCommunication(float howMuch)
 	{
-		foreach(Worker worker in workers) worker.AdjustCommunication(howMuch);
+		foreach(Worker worker in workers) worker.AdjustMood(howMuch);
 	}
 	
 	/////////////////////////// WORKER LIST //////////////////////////////

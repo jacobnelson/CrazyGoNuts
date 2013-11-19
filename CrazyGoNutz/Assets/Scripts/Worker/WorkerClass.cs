@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 /*
 	Workers are the characters that perform work of various jobs
@@ -18,15 +19,22 @@ using System.Collections;
 
 public class Worker
 {	
-	public string name = "workername";	
+	public string name = "WorkerName";	
 	WorkerType workerType;						// Artist, AudioDesigner, or Programmer
 	bool mouseOver = false;
 	public GameObject gameObject = null;		// Associated GameObject within the Scene
 	ParticleSystem roadblockParticle = null;	// ParticleSystem used to show Roadblock
 	
-	float productivity = 100;		// Ratio of communication AND frustration
-	float communication = 100;		// Descreased by WORKING, Increased by CONFERRING
-	float frustration = 1;			// Increased by WORKING and FAILURE, Descreased by RECREATION
+	public bool selected = false;
+	
+	//float productivity = 100;		// Ratio of communication AND frustration
+	//float communication = 100;		// Descreased by WORKING, Increased by CONFERRING
+	//float frustration = 1;			// Increased by WORKING and FAILURE, Descreased by RECREATION
+	
+	// PersonalBadges
+	public List<PersonalBadge> badges = new List<PersonalBadge>();
+	
+	float mood = 100f;
 	
 	SnapTarget lastSnapTarget = null;		// if currentSnapTarget is null, workers snap back to lastSnapTarget
 	SnapTarget currentSnapTarget = null;
@@ -56,6 +64,15 @@ public class Worker
 				gameObject.renderer.material.color = Color.green;
 				break;
 		}
+		
+		// Get 3 Random Personal Badges
+		for(int i = 0; i < 3; i++)
+		{
+			PersonalBadge badge = new PersonalBadge(Random.Range(0,4));
+			badges.Add(badge);
+		}
+		
+		SetToNormal();
 	}
 	
 	public void UpdateStats()
@@ -69,20 +86,22 @@ public class Worker
 				case SnapTargetType.Conference:
 					if(GameController.WorkersInConference > 1)
 					{
-						AdjustCommunication(GameController.INCREASE * Time.deltaTime);
+						//AdjustCommunication(GameController.INCREASE * Time.deltaTime);
 						if(roadblocked) RemoveRoadblock();
 					}
 					break;
 				case SnapTargetType.Recreation:
-					AdjustFrustration(GameController.DECREASE * Time.deltaTime);
-					AdjustFrustration(GameController.SLIGHT_DECREASE * (float)GameController.WorkersInRecreation * Time.deltaTime);	// More workers in RecRoom reduces frustration faster
-					AdjustCommunication(GameController.SLIGHT_INCREASE * Time.deltaTime);
-					break;
+					//AdjustFrustration(GameController.DECREASE * Time.deltaTime);
+					//AdjustFrustration(GameController.SLIGHT_DECREASE * (float)GameController.WorkersInRecreation * Time.deltaTime);	// More workers in RecRoom reduces frustration faster
+					//AdjustCommunication(GameController.SLIGHT_INCREASE * Time.deltaTime);
+					AdjustMood(GameController.SLIGHT_INCREASE * (float)GameController.WorkersInRecreation * Time.deltaTime);	// More workers in RecRoom reduces frustration faster
+					AdjustMood(GameController.INCREASE * Time.deltaTime);	
+				break;
 				case SnapTargetType.Workstation:
-					AdjustFrustration(GameController.INCREASE * Time.deltaTime);
-					AdjustCommunication(GameController.SLIGHT_DECREASE * Time.deltaTime);
-				
-					if(roadblocked) AdjustFrustration(GameController.INCREASE * Time.deltaTime);
+					//AdjustFrustration(GameController.INCREASE * Time.deltaTime);
+					//AdjustCommunication(GameController.SLIGHT_DECREASE * Time.deltaTime);
+					AdjustMood(GameController.SLIGHT_DECREASE * Time.deltaTime);
+					if(roadblocked) AdjustMood(GameController.DECREASE * Time.deltaTime);
 					break;
 			}
 		}
@@ -96,8 +115,10 @@ public class Worker
 			{
 				if(!roadblocked)
 				{
-					float rand = Random.Range(frustration, 100);
-					if(rand >= 99) SpawnRoadblock();
+					//float rand = Random.Range(frustration, 100);
+					//if(rand >= 99) SpawnRoadblock();
+					float rand = Random.Range(0f, mood);
+					if(rand <= 1f) SpawnRoadblock();
 				}
 				secondCounter = 1.0f;	
 			}
@@ -105,6 +126,19 @@ public class Worker
 			{
 				clickCounter = 0.5f;	
 			}*/
+		}
+	}
+	
+	/////////////////////////// DRAW BADGES //////////////////////////////
+	
+	public void DrawBadges(Vector2 offset, float margin, float size)	// Only run from OnGUI() in GameController
+	{
+		for(int i = 0; i < badges.Count; i++)
+		{
+			Rect rect = new Rect(offset.x + margin * i, offset.y, size,size);
+			GUI.DrawTexture( rect, badges[i].GetTexture());
+			if(badges[i].completed) GUI.Label(rect, new GUIContent("",badges[i].tooltip + " Completed!"));
+			else GUI.Label(rect, new GUIContent("",badges[i].tooltip));
 		}
 	}
 	
@@ -127,7 +161,23 @@ public class Worker
 	
 	/////////////////////////// STATS //////////////////////////////
 	
-	public void AdjustCommunication(float howMuch)
+	public void AdjustMood(float howMuch)
+	{
+		mood += howMuch;
+		if(mood > 100f) mood = 100f;
+		if(mood < 0.1f) mood = 0.1f;
+		//CalculateProductivity();
+	}
+	public float GetMood()
+	{
+		return mood;
+	}
+	/*public float GetMoodPercent()
+	{
+		return mood / 100f + (badges.Count * 0.15f);	// Badges make you more productive
+	}*/
+	
+	/*public void AdjustCommunication(float howMuch)
 	{
 		communication += howMuch;
 		if(communication > 100) communication = 100;
@@ -164,7 +214,7 @@ public class Worker
 	public float GetProductivity()
 	{
 		return productivity;
-	}
+	}*/
 	
 	public bool Roadblocked()
 	{
@@ -178,15 +228,44 @@ public class Worker
 		return workerType;	
 	}
 	
-	/////////////////////////// MOUSE OVER //////////////////////////////
+	/////////////////////////// MOUSE OVER AND SELECTION //////////////////////////////
 	
 	public void SetMouseOver(bool mouseOver)
 	{
 		this.mouseOver = mouseOver;
+		if(!selected)
+		{
+			if(mouseOver) SetToMouseOver();
+			else SetToNormal();
+		}
 	}
 	public bool GetMouseOver()
 	{
 		return mouseOver;
+	}
+	
+	public void SetSelected(bool selected)
+	{
+		this.selected = selected;
+		if(selected) SetToSelected();
+		else SetToNormal();
+	}
+	public bool GetSelected()
+	{
+		return selected;
+	}
+	
+	private void SetToMouseOver()
+	{
+		if(gameObject.renderer.material.HasProperty("_OutlineColor")) gameObject.renderer.material.SetColor("_OutlineColor", new Color(0,1,1,1));
+	}
+	private void SetToSelected()
+	{
+		if(gameObject.renderer.material.HasProperty("_OutlineColor")) gameObject.renderer.material.SetColor("_OutlineColor", new Color(1,1,1,1));
+	}
+	private void SetToNormal()
+	{
+		if(gameObject.renderer.material.HasProperty("_OutlineColor")) gameObject.renderer.material.SetColor("_OutlineColor", new Color(0,0,0,0));
 	}
 	
 	/////////////////////////// MOUSE CLICK //////////////////////////////
