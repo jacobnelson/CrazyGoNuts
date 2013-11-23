@@ -35,6 +35,7 @@ public class Worker
 	public List<PersonalBadge> badges = new List<PersonalBadge>();
 	
 	float mood = 100f;
+	string currentMood = "Happy";
 	
 	SnapTarget lastSnapTarget = null;		// if currentSnapTarget is null, workers snap back to lastSnapTarget
 	SnapTarget currentSnapTarget = null;
@@ -43,6 +44,10 @@ public class Worker
 	bool roadblocked = false;
 	float secondCounter = 0;
 	float clickCounter = 0;
+	
+	// Materials
+	//private List<Renderer> renderers = new List<Renderer>();
+	private Renderer[] renderers;
 	
 	public Worker(GameObject gameObject, WorkerType workerType)
 	{
@@ -55,13 +60,13 @@ public class Worker
 		switch(workerType)	// Change material color based on WorkerType
 		{
 			case WorkerType.Artist:
-				gameObject.renderer.material.color = Color.cyan;
+				//gameObject.renderer.material.color = Color.cyan;
 				break;
 			case WorkerType.Programmer:
-				gameObject.renderer.material.color = Color.grey;
+				//gameObject.renderer.material.color = Color.grey;
 				break;
 			case WorkerType.AudioDesigner:
-				gameObject.renderer.material.color = Color.green;
+				//gameObject.renderer.material.color = Color.green;
 				break;
 		}
 		
@@ -71,6 +76,9 @@ public class Worker
 			PersonalBadge badge = new PersonalBadge(Random.Range(0,4));
 			badges.Add(badge);
 		}
+		
+		// Get Renderers
+		GetRenderers();
 		
 		SetToNormal();
 	}
@@ -127,6 +135,10 @@ public class Worker
 				clickCounter = 0.5f;	
 			}*/
 		}
+		
+		// Update Mood
+		UpdateMood();
+
 	}
 	
 	/////////////////////////// DRAW BADGES //////////////////////////////
@@ -159,7 +171,27 @@ public class Worker
 		}
 	}
 	
-	/////////////////////////// STATS //////////////////////////////
+	/////////////////////////// MOOD //////////////////////////////
+	
+	// ------------------------ Update Mood -------------------------------
+	private void UpdateMood()
+	{
+		string newMood = "";
+		if(mood > 80f) newMood = "Happy";
+		else if(mood <= 80f && mood > 60f) newMood = "Less Happy";
+		else if(mood <= 60f && mood > 40f) newMood = "Neutral";
+		else if(mood <= 40f && mood > 20f) newMood = "Discontent";
+		else if(mood <= 20f) newMood = "Angry";
+		
+		if(newMood != currentMood)
+		{
+			// Spawn Particle!
+			currentMood = newMood;
+			Vector3 pos = gameObject.transform.position;
+			pos.y = 1.5f;
+			SpawnParticle.SpawnMoodParticle( pos, GetMoodTexture());
+		}
+	}
 	
 	public void AdjustMood(float howMuch)
 	{
@@ -172,6 +204,25 @@ public class Worker
 	{
 		return mood;
 	}
+	public string GetCurrentMood()
+	{
+		return currentMood;
+	}
+	public Texture2D GetMoodTexture()
+	{
+		Texture2D texture = null;
+		if(mood > 80f) texture = MoodTextures.textures.happy;
+		else if(mood <= 80f && mood > 60f) texture = MoodTextures.textures.lesshappy;
+		else if(mood <= 60f && mood > 40f) texture = MoodTextures.textures.neutral;
+		else if(mood <= 40f && mood > 20f) texture = MoodTextures.textures.lessangry;
+		else if(mood <= 20f) texture = MoodTextures.textures.angry;
+		
+		return texture;
+	}
+	
+	/////////////////////////// STATS //////////////////////////////
+	
+	
 	/*public float GetMoodPercent()
 	{
 		return mood / 100f + (badges.Count * 0.15f);	// Badges make you more productive
@@ -257,15 +308,43 @@ public class Worker
 	
 	private void SetToMouseOver()
 	{
-		if(gameObject.renderer.material.HasProperty("_OutlineColor")) gameObject.renderer.material.SetColor("_OutlineColor", new Color(0,1,1,1));
+		if(gameObject.renderer) if(gameObject.renderer.material.HasProperty("_OutlineColor")) gameObject.renderer.material.SetColor("_OutlineColor", new Color(0,1,1,1));
+		if(renderers.Length > 0)
+		{
+			foreach(Renderer renderer in renderers)
+			{
+				if(renderer.material.HasProperty("_OutlineColor")) renderer.material.SetColor("_OutlineColor", new Color(0,1,1,1));
+			}
+		}
 	}
 	private void SetToSelected()
 	{
-		if(gameObject.renderer.material.HasProperty("_OutlineColor")) gameObject.renderer.material.SetColor("_OutlineColor", new Color(1,1,1,1));
+		if(gameObject.renderer) if(gameObject.renderer.material.HasProperty("_OutlineColor")) gameObject.renderer.material.SetColor("_OutlineColor", new Color(1,1,1,1));
+		if(renderers.Length > 0)
+		{
+			foreach(Renderer renderer in renderers)
+			{
+				if(renderer.material.HasProperty("_OutlineColor")) renderer.material.SetColor("_OutlineColor", new Color(1,1,1,1));
+			}
+		}
 	}
 	private void SetToNormal()
 	{
-		if(gameObject.renderer.material.HasProperty("_OutlineColor")) gameObject.renderer.material.SetColor("_OutlineColor", new Color(0,0,0,0));
+		if(gameObject.renderer) if(gameObject.renderer.material.HasProperty("_OutlineColor")) gameObject.renderer.material.SetColor("_OutlineColor", new Color(0,0,0,0));
+		if(renderers.Length > 0)
+		{
+			foreach(Renderer renderer in renderers)
+			{
+				if(renderer.material.HasProperty("_OutlineColor")) renderer.material.SetColor("_OutlineColor", new Color(0,0,0,0));
+			}
+		}
+	}
+	
+	private void GetRenderers()
+	{
+		//Renderer[] rendererComponents = gameObject.GetComponentsInChildren<Renderer>();
+		//Debug.Log(rendererComponents.Length);
+		renderers = gameObject.GetComponentsInChildren<Renderer>();
 	}
 	
 	/////////////////////////// MOUSE CLICK //////////////////////////////
@@ -333,7 +412,8 @@ public class Worker
 		currentSnapTarget.SetWorker(this);					// Fill currentSnapTarget
 		
 		Vector3 pos = currentSnapTarget.GetPosition();
-		pos.y = 0.5f;
+		//pos.y = 0.5f;
+		pos.y = 0.0f;
 		
 		SetPosition( pos );
 		gameObject.layer = 9;			// Default Layer

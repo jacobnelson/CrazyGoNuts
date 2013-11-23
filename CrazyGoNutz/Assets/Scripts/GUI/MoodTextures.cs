@@ -5,9 +5,11 @@ public class MoodTextures : MonoBehaviour
 {
 	static public MoodTextures textures = null;
 	
-	public Texture2D happygreen = null;
-	public Texture2D neutralyellow = null;
-	public Texture2D angryred = null;
+	public Texture2D happy = null;
+	public Texture2D lesshappy = null;
+	public Texture2D neutral = null;
+	public Texture2D lessangry = null;
+	public Texture2D angry = null;
 	
 	void Awake()
 	{

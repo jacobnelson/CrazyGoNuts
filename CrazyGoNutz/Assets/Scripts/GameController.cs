@@ -102,6 +102,7 @@ public class GameController : MonoBehaviour
 	
 	// GUIStyles
 	public GUIStyle mouseOverStyle;
+	public GUIStyle floatingTextStyle;
 	
 	// PerSecond Counter
 	private float counter = 0;
@@ -127,7 +128,7 @@ public class GameController : MonoBehaviour
 		//CreateTeamBadges();
 		TeamBadge.CreateTeamBadges();
 		
-		//meeting = new Meeting(50f * WORK_RATE);
+		FloatingText.style = floatingTextStyle;
 	}
 	
 	// Update is called once per frame
@@ -180,13 +181,6 @@ public class GameController : MonoBehaviour
 		float badgesize = 48f;
 		TeamBadge.DrawTeamBadges(new Vector2( (Screen.width  * 0.5f) - (TeamBadge.teamBadges.Count * badgesize * 0.5f),badgesize), badgesize + 2f,badgesize);
 		
-		if(GUI.tooltip.Length > 0)
-		{
-			float height = GUI.tooltip.Length / 64f * 24f + 24f;
-			//GUI.Box(new Rect(Input.mousePosition.x + 16, Screen.height - Input.mousePosition.y, 352, 96), "", TeamBadgeTextures.textures.marqueeStyle);
-			GUI.Box(new Rect(Input.mousePosition.x + 16, Screen.height - Input.mousePosition.y, 352, height), "", TeamBadgeTextures.textures.marqueeStyle);
-			GUI.Label(new Rect(Input.mousePosition.x + 16, Screen.height - Input.mousePosition.y, 352, 96), GUI.tooltip);
-		}
 		
 		// Temp for Debug
 		string avgProdNeeded = " (" + (WORK_RATE * TotalWorkers * TARGET_WORK_PERCENTAGE).ToString("f2") + ")";
@@ -202,56 +196,19 @@ public class GameController : MonoBehaviour
 			GUI.Label( new Rect(10, 120, 512, 24), text);
 		}
 		
-		// Debug mouseOverWorker stats
-		if(cameraRaycaster != null && cameraRaycaster.mouseOverWorker != null)
-		{
-			Vector2 offset = new Vector2(Screen.width - 320f, Screen.height - 256f);
-			Worker worker =  cameraRaycaster.mouseOverWorker;
-			mouseOverStyle.fontSize = 24;
-			GUI.Label( new Rect(offset.x, offset.y, 256, 24), "" + worker.name, mouseOverStyle);
-			mouseOverStyle.fontSize = 20;
-			GUI.Label( new Rect(offset.x, offset.y + 32f, 256, 24), "" + worker.GetWorkerType(), mouseOverStyle);
-			float mood = worker.GetMood();
-			if(mood > 66f) GUI.DrawTexture( new Rect(offset.x + (320f * 0.5f - 64f),  offset.y + 64f, 64f, 64f), MoodTextures.textures.happygreen);
-			else if(mood <= 66f && mood > 33f) GUI.DrawTexture( new Rect(offset.x + (320f * 0.5f - 64f),  offset.y + 64f, 64f, 64f), MoodTextures.textures.neutralyellow);
-			else if(mood <= 33f) GUI.DrawTexture( new Rect(offset.x + (320f * 0.5f - 64f),  offset.y + 64f, 64f, 64f), MoodTextures.textures.angryred);
-			worker.DrawBadges(new Vector2(offset.x + (320f * 0.5f - 104f), Screen.height - 112f), 48f, 48f);
-		}
-		else if(cameraRaycaster != null && cameraRaycaster.selectedworker != null)
-		{
-			Vector2 offset = new Vector2(Screen.width - 320f, Screen.height - 256f);
-			Worker worker =  cameraRaycaster.selectedworker;
-			mouseOverStyle.fontSize = 24;
-			GUI.Label( new Rect(offset.x, offset.y, 256, 24), "" + worker.name, mouseOverStyle);
-			mouseOverStyle.fontSize = 20;
-			GUI.Label( new Rect(offset.x, offset.y + 32f, 256, 24), "" + worker.GetWorkerType(), mouseOverStyle);
-			float mood = worker.GetMood();
-			if(mood > 66f) GUI.DrawTexture( new Rect(offset.x + (320f * 0.5f - 64f),  offset.y + 64f, 64f, 64f), MoodTextures.textures.happygreen);
-			else if(mood <= 66f && mood > 33f) GUI.DrawTexture( new Rect(offset.x + (320f * 0.5f - 64f),  offset.y + 64f, 64f, 64f), MoodTextures.textures.neutralyellow);
-			else if(mood <= 33f) GUI.DrawTexture( new Rect(offset.x + (320f * 0.5f - 64f),  offset.y + 64f, 64f, 64f), MoodTextures.textures.angryred);
-			worker.DrawBadges(new Vector2(offset.x + (320f * 0.5f - 104f), Screen.height - 112f), 48f, 48f);
-		}
+		// Draw MouseOver or Selected Worker Stats
+		DrawWorkerStats();
+	
+		// Floating Text
+		FloatingText.DrawText();
+		
+		// Draw Tooltip
+		DrawTooltips();
 		
 		//Drawing.DrawLine( new Vector2(50,50), new Vector2(50,250), 2f);
 	}
 	
-	/////////////////////////// UPDATE WORKERS //////////////////////////////
 	
-	private void UpdateWorkers()
-	{
-		foreach(Worker worker in workers)
-		{
-			worker.UpdateStats();	// Calc roadblock chance
-			if(worker.AtWorkstation() && !worker.Roadblocked())
-			{
-				WorkOnCurrentTask( worker.GetWorkerType(), worker.GetMood() * 0.01f );	// If worker at a workerstation, add to current task
-			}
-			else if(worker.InConferenceRoom() && WorkersInConference > 1)	// If this worker in conference and not alone, add to meeting.completion
-			{
-				if(meeting != null) WorkOnCurrentMeeting( WORK_RATE * Time.deltaTime );
-			}
-		}
-	}
 	
 	/////////////////////////// TASKS //////////////////////////////
 	
@@ -263,6 +220,7 @@ public class GameController : MonoBehaviour
 			// Check Milestone?
 			currentTaskIndex++;
 			currentTask = null;
+			FloatingText.AddText("Task Complete!!", Vector3.zero, new Vector3(0,0.5f,0), 36f, 3.6f, Color.white);
 		}
 		
 		if(currentTask == null && currentTaskIndex < taskList.Count) currentTask = taskList[currentTaskIndex];
@@ -312,7 +270,7 @@ public class GameController : MonoBehaviour
 			}
 			
 			currentPos += weight;
-			Debug.Log("GenerateTaskList -> Task" + taskList.Count + " weight is " + weight);
+			//Debug.Log("GenerateTaskList -> Task" + taskList.Count + " weight is " + weight);
 		}
 		
 		//Debug.Log("GenerateTaskList -> Count is " + taskList.Count + ", with " + milestones.Count + "milestones");
@@ -449,8 +407,28 @@ public class GameController : MonoBehaviour
 		// Draw Milestones
 	}
 	
+	/////////////////////////// TOOLTIPS //////////////////////////////
+	
+	private void DrawTooltips()
+	{
+		if(GUI.tooltip.Length > 0)
+		{
+			float height = GUI.tooltip.Length / 64f * 24f + 24f;
+			float width = 352f;
+			float x = Input.mousePosition.x + 16;
+			float y = Screen.height - Input.mousePosition.y;
+			
+			if(x + width > Screen.width) x = Screen.width - width - TeamBadgeTextures.textures.marqueeStyle.border.right * 2;
+			
+			//GUI.Box(new Rect(Input.mousePosition.x + 16, Screen.height - Input.mousePosition.y, 352, 96), "", TeamBadgeTextures.textures.marqueeStyle);
+			GUI.Box(new Rect( x, y, width, height), "", TeamBadgeTextures.textures.marqueeStyle);
+			GUI.Label(new Rect( x, y, width, 96), GUI.tooltip);
+		}
+	}
+	
 	/////////////////////////// DEADLINE //////////////////////////////
 	
+	// ------------------------ Update Deadline -------------------------------
 	private void UpdateDeadline()
 	{
 		initialDeadlineDelay -= Time.deltaTime;	// Delay before the deadline starts counting down
@@ -533,8 +511,105 @@ public class GameController : MonoBehaviour
 		foreach(Worker worker in workers) if(mouseOverObj == worker.gameObject) worker.SetMouseOver(true);
 	}
 	
-	/////////////////////////// SPAWN WORKERS //////////////////////////////
 	
+	
+	/////////////////////////// GROUP EFFECTS //////////////////////////////
+	
+	private void ReduceGroupFrustration(float howMuch)
+	{
+		foreach(Worker worker in workers) worker.AdjustMood(howMuch);
+	}
+	private void AdjustGroupCommunication(float howMuch)
+	{
+		foreach(Worker worker in workers) worker.AdjustMood(howMuch);
+	}
+	
+	/////////////////////////// WORKERS  //////////////////////////////
+	
+	// ------------------------ Update Workers -------------------------------
+	
+	private void UpdateWorkers()
+	{
+		foreach(Worker worker in workers)
+		{
+			worker.UpdateStats();	// Calc roadblock chance
+			if(worker.AtWorkstation() && !worker.Roadblocked())
+			{
+				WorkOnCurrentTask( worker.GetWorkerType(), worker.GetMood() * 0.01f );	// If worker at a workerstation, add to current task
+			}
+			else if(worker.InConferenceRoom() && WorkersInConference > 1)	// If this worker in conference and not alone, add to meeting.completion
+			{
+				if(meeting != null) WorkOnCurrentMeeting( WORK_RATE * Time.deltaTime );
+			}
+		}
+	}
+	
+	// ------------------------ Draw Workers -------------------------------
+	
+	private void DrawWorkerStats()
+	{
+		Worker worker = null;
+		if(cameraRaycaster != null)
+		{
+			if(cameraRaycaster.mouseOverWorker != null) worker =  cameraRaycaster.mouseOverWorker;
+			else if(cameraRaycaster.selectedworker != null) worker =  cameraRaycaster.selectedworker;
+		}
+		
+		if(worker != null)
+		{
+			Vector2 offset = new Vector2(Screen.width - 320f, Screen.height - 256f);
+			mouseOverStyle.fontSize = 24;
+			GUI.Label( new Rect(offset.x, offset.y, 256, 24), "" + worker.name, mouseOverStyle);
+			mouseOverStyle.fontSize = 20;
+			GUI.Label( new Rect(offset.x, offset.y + 32f, 256, 24), "" + worker.GetWorkerType(), mouseOverStyle);
+			
+			Texture2D texture = worker.GetMoodTexture();
+			if(texture != null) 
+			{
+				Rect rect = new Rect(offset.x + (320f * 0.5f - 64f),  offset.y + 64f, 64f, 64f);
+				GUI.DrawTexture( rect, texture);
+				float mood = worker.GetMood();
+				GUI.Label(rect, new GUIContent("", worker.GetCurrentMood() + " (" + mood.ToString("f0") + "/100)"));
+			}
+			/*float mood = worker.GetMood();
+			if(mood > 66f) GUI.DrawTexture( new Rect(offset.x + (320f * 0.5f - 64f),  offset.y + 64f, 64f, 64f), MoodTextures.textures.happy);
+			else if(mood <= 66f && mood > 33f) GUI.DrawTexture( new Rect(offset.x + (320f * 0.5f - 64f),  offset.y + 64f, 64f, 64f), MoodTextures.textures.neutral);
+			else if(mood <= 33f) GUI.DrawTexture( new Rect(offset.x + (320f * 0.5f - 64f),  offset.y + 64f, 64f, 64f), MoodTextures.textures.angry);*/
+			
+			worker.DrawBadges(new Vector2(offset.x + (320f * 0.5f - 104f), Screen.height - 112f), 48f, 48f);
+		}
+		
+		/*if(cameraRaycaster != null && cameraRaycaster.mouseOverWorker != null)
+		{
+			Vector2 offset = new Vector2(Screen.width - 320f, Screen.height - 256f);
+			Worker worker =  cameraRaycaster.mouseOverWorker;
+			mouseOverStyle.fontSize = 24;
+			GUI.Label( new Rect(offset.x, offset.y, 256, 24), "" + worker.name, mouseOverStyle);
+			mouseOverStyle.fontSize = 20;
+			GUI.Label( new Rect(offset.x, offset.y + 32f, 256, 24), "" + worker.GetWorkerType(), mouseOverStyle);
+			float mood = worker.GetMood();
+			if(mood > 66f) GUI.DrawTexture( new Rect(offset.x + (320f * 0.5f - 64f),  offset.y + 64f, 64f, 64f), MoodTextures.textures.happy);
+			else if(mood <= 66f && mood > 33f) GUI.DrawTexture( new Rect(offset.x + (320f * 0.5f - 64f),  offset.y + 64f, 64f, 64f), MoodTextures.textures.neutral);
+			else if(mood <= 33f) GUI.DrawTexture( new Rect(offset.x + (320f * 0.5f - 64f),  offset.y + 64f, 64f, 64f), MoodTextures.textures.angry);
+			worker.DrawBadges(new Vector2(offset.x + (320f * 0.5f - 104f), Screen.height - 112f), 48f, 48f);
+		}
+		else if(cameraRaycaster != null && cameraRaycaster.selectedworker != null)
+		{
+			Vector2 offset = new Vector2(Screen.width - 320f, Screen.height - 256f);
+			Worker worker =  cameraRaycaster.selectedworker;
+			mouseOverStyle.fontSize = 24;
+			GUI.Label( new Rect(offset.x, offset.y, 256, 24), "" + worker.name, mouseOverStyle);
+			mouseOverStyle.fontSize = 20;
+			GUI.Label( new Rect(offset.x, offset.y + 32f, 256, 24), "" + worker.GetWorkerType(), mouseOverStyle);
+			float mood = worker.GetMood();
+			if(mood > 66f) GUI.DrawTexture( new Rect(offset.x + (320f * 0.5f - 64f),  offset.y + 64f, 64f, 64f), MoodTextures.textures.happy);
+			else if(mood <= 66f && mood > 33f) GUI.DrawTexture( new Rect(offset.x + (320f * 0.5f - 64f),  offset.y + 64f, 64f, 64f), MoodTextures.textures.neutral);
+			else if(mood <= 33f) GUI.DrawTexture( new Rect(offset.x + (320f * 0.5f - 64f),  offset.y + 64f, 64f, 64f), MoodTextures.textures.angry);
+			worker.DrawBadges(new Vector2(offset.x + (320f * 0.5f - 104f), Screen.height - 112f), 48f, 48f);
+		}*/
+	}
+	
+	// ------------------------ Spawn Workers -------------------------------
 	private void SpawnWorkers()
 	{
 		if(workers.Count == 0)
@@ -544,7 +619,7 @@ public class GameController : MonoBehaviour
 				GameObject obj = null;
 				Vector3 pos = new Vector3();
 				pos.x = Random.Range(-2.0f, 2.0f);
-				pos.y = 0.5f;
+				pos.y = 0.0f;
 				pos.z = Random.Range(-2.0f, 2.0f);
 				obj = Instantiate(workerPrefab, pos, Quaternion.identity) as GameObject;
 				
@@ -559,18 +634,7 @@ public class GameController : MonoBehaviour
 		}
 	}
 	
-	/////////////////////////// GROUP EFFECTS //////////////////////////////
-	
-	private void ReduceGroupFrustration(float howMuch)
-	{
-		foreach(Worker worker in workers) worker.AdjustMood(howMuch);
-	}
-	private void AdjustGroupCommunication(float howMuch)
-	{
-		foreach(Worker worker in workers) worker.AdjustMood(howMuch);
-	}
-	
-	/////////////////////////// WORKER LIST //////////////////////////////
+	// ------------------------ Worker List Management -------------------------------
 	
 	static public Worker AddWorker(GameObject newWorker, WorkerType type)
 	{
@@ -604,7 +668,7 @@ public class GameController : MonoBehaviour
 		}
 		TotalWorkers = workers.Count;
 		
-		Debug.Log("Workers: " + workers.Count + "; Programmers " + Programmers + "; Artists " + Artists + "; AudioDesigners " + AudioDesigners);
+		//Debug.Log("Workers: " + workers.Count + "; Programmers " + Programmers + "; Artists " + Artists + "; AudioDesigners " + AudioDesigners);
 	}
 	private void CountWorkersPerRoom()
 	{
@@ -654,6 +718,13 @@ public class GameController : MonoBehaviour
 			if(snapTarget != null && !snapTarget.isRoom() && snapTarget.MatchesType(type) && snapTarget.isEmpty()) return snapTarget;
 		
 		return null;
+	}
+	
+	/////////////////////////// MAP //////////////////////////////
+	
+	static public float Map(float current, float from1, float from2, float to1, float to2)
+	{
+	    return to1 + (current - from1) * (to2 - to1) / (from2 - from1);
 	}
 	
 }
