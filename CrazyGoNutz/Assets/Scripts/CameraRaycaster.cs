@@ -35,7 +35,7 @@ public class CameraRaycaster : MonoBehaviour
 	
 	void Start () 
 	{
-		gameController = GameObject.Find("GameController").GetComponent<GameController>();
+		//gameController = GameObject.Find("GameController").GetComponent<GameController>();
 	}
 	
 	// Update is called once per frame
@@ -204,7 +204,7 @@ public class CameraRaycaster : MonoBehaviour
 		// dragObject is follows the mouse until Dropped.
 		Vector3 pos = RaycastVectorFromMouse();
 		
-		if(mouseOverSnapTarget != null && mouseOverSnapTarget.isEmpty() && !mouseOverSnapTarget.isRoom())
+		if(mouseOverSnapTarget != null && mouseOverSnapTarget.isEmpty() && !mouseOverSnapTarget.isRoom() && !mouseOverSnapTarget.isZone())
 		{
 			pos = mouseOverSnapTarget.GetPosition();
 			//dragObject.transform.position = new Vector3(pos.x, 0.5f, pos.z);
@@ -232,6 +232,10 @@ public class CameraRaycaster : MonoBehaviour
 					//Debug.Log("Dropped in Room");
 					DropInRoom(dragObject, mouseOverSnapTarget);
 				}
+				else if(mouseOverSnapTarget.isZone())
+				{
+					DropInZone(dragObject);
+				}
 				else
 				{
 					//Debug.Log("Dropped on SnapTarget");
@@ -254,6 +258,17 @@ public class CameraRaycaster : MonoBehaviour
 		SnapTarget openSnapTarget = GameController.FindOpenSnapTargetOfType( snapTarget.GetType() );
 		
 		dragObject.EndDrag(openSnapTarget);
+	}
+	
+	private void DropInZone(Worker worker)
+	{
+		//SnapTarget openSnapTarget = GameController.FindOpenSnapTargetOfType( snapTarget.GetType() );
+		
+		dragObject.EndDrag(null);
+		
+		Vector3 pos = dragObject.GetPosition();
+		pos.y = 0;
+		dragObject.SetPosition( pos );
 	}
 	
 	private void DropOnWorker(Worker droppedWorker, Worker targetWorker)

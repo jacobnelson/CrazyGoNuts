@@ -34,37 +34,43 @@ public class PersonalBadge : MeritBadge			// These are only for the WORKERS
 		switch(index)
 		{
 		case 0:
-			this.name = "Personal Badge 1";
-			this.tooltip = "Team Badge 1\nObtain this Team Badge by sucessfully completely 1 Milestone.";
+			this.name = "Helping Hands";
+			this.tooltip = "Help another Student get through a Problem.";
 			this.completedTex = PersonalBadgeTextures.textures.texture01;
 			this.emptyTex = PersonalBadgeTextures.textures.textureOutline01;
 			break;
 		case 1:
-			this.name = "Personal Badge 2";
-			this.tooltip = "Team Badge 2\nObtain this Team Badge by sucessfully completely 1 Milestone.";
+			this.name = "Wrapping Things Up";
+			this.tooltip = "Be at a Workstation when a Milestone is Achieved.";
 			this.completedTex = PersonalBadgeTextures.textures.texture01;
 			this.emptyTex = PersonalBadgeTextures.textures.textureOutline01;
 			break;
 		case 2:
-			this.name = "Personal Badge 3";
-			this.tooltip = "Team Badge 4\nObtain this Team Badge by sucessfully completely 1 Milestone.";
+			this.name = "Takin' It Easy";
+			this.tooltip = "Spend 2 minutes straight in the Recreation Room while 'Happy'";
 			this.completedTex = PersonalBadgeTextures.textures.texture01;
 			this.emptyTex = PersonalBadgeTextures.textures.textureOutline01;
 			break;
 		case 3:
-			this.name = "Personal Badge 4";
-			this.tooltip = "Team Badge 4\nObtain this Team Badge by sucessfully completely 1 Milestone.";
+			this.name = "Working Hard";
+			this.tooltip = "Spend 2 minutes straight at a Workstation.";
+			this.completedTex = PersonalBadgeTextures.textures.texture01;
+			this.emptyTex = PersonalBadgeTextures.textures.textureOutline01;
+			break;
+		case 4:
+			this.name = "Chatterbox";
+			this.tooltip = "Complete 3 Meetings";
 			this.completedTex = PersonalBadgeTextures.textures.texture01;
 			this.emptyTex = PersonalBadgeTextures.textures.textureOutline01;
 			break;
 		default:
-			this.name = "This is badge is Broken, aye oh!";
-			this.tooltip = "Obtain this Personal Badge by sucessfully failing at something important.";
+			this.name = "Chatterbox";
+			this.tooltip = "Complete 3 Meetings";
 			this.completedTex = PersonalBadgeTextures.textures.texture01;
 			this.emptyTex = PersonalBadgeTextures.textures.textureOutline01;
 			break;
-			break;
 		}
+		this.tooltip = this.name + "\n" + this.tooltip;
 	}
 	
 	/*static public void DrawBadges(Vector2 offset, float margin, float size)	// Only run from OnGUI() in GameController

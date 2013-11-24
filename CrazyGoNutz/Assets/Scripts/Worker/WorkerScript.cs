@@ -28,4 +28,8 @@ public class WorkerScript : MonoBehaviour
 		worker.name = "Worker" + (int)Random.Range(0,1000);	//TODO: Temp for debug.
 		name = worker.name;
 	}
+	public void DontDestroy()
+	{
+		DontDestroyOnLoad(gameObject);
+	}
 }

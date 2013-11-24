@@ -38,14 +38,32 @@ public class TeamBadge : MeritBadge				// These are only for the TEAM
 		switch(index)
 		{
 		case 0:
-			this.name = "Team Badge 1";
-			this.tooltip = "Team Badge 1\nObtain this Team Badge by sucessfully completely 1 Milestone.";
+			this.name = "All Aboard! Choo! Choo!";
+			this.tooltip = "Complete a Meeting with every team member in the Conference Room.";
 			this.completedTex = TeamBadgeTextures.textures.texture01;
 			this.emptyTex = TeamBadgeTextures.textures.textureOutline01;
 			break;
 		case 1:
-			this.name = "Team Badge 2";
-			this.tooltip = "Team Badge 2\nObtain this Team Badge by sucessfully completely 1 Milestone.";
+			this.name = "Pizza Party!";
+			this.tooltip = "Have all the Students in the Recreation Room at once while ahead of schedule.";
+			this.completedTex = TeamBadgeTextures.textures.texture01;
+			this.emptyTex = TeamBadgeTextures.textures.textureOutline01;
+			break;
+		case 2:
+			this.name = "Flawless Victory!";
+			this.tooltip = "Achieve every Milestone.";
+			this.completedTex = TeamBadgeTextures.textures.texture01;
+			this.emptyTex = TeamBadgeTextures.textures.textureOutline01;
+			break;
+		case 3:
+			this.name = "Cool as a Cucumber";
+			this.tooltip = "Don't let any Student become 'Angry'.";
+			this.completedTex = TeamBadgeTextures.textures.texture01;
+			this.emptyTex = TeamBadgeTextures.textures.textureOutline01;
+			break;
+		case 4:
+			this.name = "Mind Blown";
+			this.tooltip = "Have all Students obtain 5 Stars and Complete all Personal Badges.";
 			this.completedTex = TeamBadgeTextures.textures.texture01;
 			this.emptyTex = TeamBadgeTextures.textures.textureOutline01;
 			break;
@@ -57,11 +75,12 @@ public class TeamBadge : MeritBadge				// These are only for the TEAM
 			break;
 			break;
 		}
+		this.tooltip = this.name + "\n" + this.tooltip;
 	}
 	
 	static public void CreateTeamBadges()
 	{
-		for(int i = 0; i < 6; i++)
+		for(int i = 0; i < 5; i++)
 		{
 			TeamBadge badge = new TeamBadge(i);
 			teamBadges.Add(badge);

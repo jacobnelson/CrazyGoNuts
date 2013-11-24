@@ -16,6 +16,7 @@ public class GameController : MonoBehaviour
 	
 	// Statics
 	static private List<Worker> workers = new List<Worker>();
+	//static private List<GameObject> workerObjects = new List<GameObject>();
 	static private List<SnapTarget> snaptargets = new List<SnapTarget>();
 	
 	static public int Programmers = 0;
@@ -49,9 +50,8 @@ public class GameController : MonoBehaviour
 	public const float WORK_RATE = 0.6f;	// How much work a Worker does per second
 	public const float TARGET_WORK_PERCENTAGE = 0.2f;	// Percentage of work capacity needed to keep up with deadline
 		
-	public const float MILESTONE_FRUSTRATION_REDUCTION = -10.0f;
-	public const float MEETING_FRUSTRATION_REDUCTION = -30.0f;
-	public const float MEETING_COMMUNICATION_INCREASE = 20.0f;
+	public const float MILESTONE_MOOD_INCREASE = 10.0f;
+	public const float MEETING_MOOD_INCREASE = 20.0f;
 	
 	// Productivity Per Sec
 	private float totalProductivity = 0f;
@@ -113,9 +113,13 @@ public class GameController : MonoBehaviour
 		cameraRaycaster = Camera.main.GetComponent<CameraRaycaster>();
 		
 		//deadlineMax = gameLengthMax;
+		//if(workers.Count == 0) workers = new List<Worker>();
+		if(workers.Count == 0) workers = CharSelectScript.selectedworkers;	// Get worker class objects from CharSelectScript
+		Debug.Log("workers.Count " + workers.Count);
 		
 		// Create Worker GameObjects
-		if(workers.Count == 0) SpawnWorkers();
+		if(workers.Count == 0) SpawnWorkers(true);
+		else SpawnWorkers(false);
 		CountWorkers();
 		
 		// Create Tasks
@@ -201,6 +205,7 @@ public class GameController : MonoBehaviour
 	
 		// Floating Text
 		FloatingText.DrawText();
+		Banner.DrawText();
 		
 		// Draw Tooltip
 		DrawTooltips();
@@ -220,7 +225,8 @@ public class GameController : MonoBehaviour
 			// Check Milestone?
 			currentTaskIndex++;
 			currentTask = null;
-			FloatingText.AddText("Task Complete!!", Vector3.zero, new Vector3(0,0.5f,0), 36f, 3.6f, Color.white);
+			//FloatingText.AddText("Task Complete!!", Vector3.zero, new Vector3(0,0.5f,0), 36f, 3.6f, Color.white);
+			Banner.AddScalingBanner("Task Complete!!", 82f, new Vector3(Screen.width /2, Screen.height/2 - 256f,0), 0.55f, Interpolate.EaseType.EaseOutSine, new float[]{0,0.85f,1f}, new float[]{1f,0f,2.5f},1f);
 		}
 		
 		if(currentTask == null && currentTaskIndex < taskList.Count) currentTask = taskList[currentTaskIndex];
@@ -319,8 +325,7 @@ public class GameController : MonoBehaviour
 	{
 		if(meeting != null && meeting.completion >= meeting.completionMax)
 		{
-			ReduceGroupFrustration(MEETING_FRUSTRATION_REDUCTION);
-			AdjustGroupCommunication(MEETING_COMMUNICATION_INCREASE);
+			AdjustGroupMood(MEETING_MOOD_INCREASE);
 			StatsAnalysis.completedMeetings += 1;
 			meeting = null;
 		}
@@ -358,7 +363,7 @@ public class GameController : MonoBehaviour
 					if(milestone.Failed()) { SpawnMeeting(); }	// Spawn a Meeting
 					if(milestone.Achieved())  // Reduce Frustration, 25% chance for Meeting?
 					{ 
-						ReduceGroupFrustration(MILESTONE_FRUSTRATION_REDUCTION); 
+						AdjustGroupMood(MILESTONE_MOOD_INCREASE); 
 						if(Random.Range(0,100) < 25) SpawnMeeting();
 					}	
 				}
@@ -515,14 +520,18 @@ public class GameController : MonoBehaviour
 	
 	/////////////////////////// GROUP EFFECTS //////////////////////////////
 	
-	private void ReduceGroupFrustration(float howMuch)
+	private void AdjustGroupMood(float howMuch)
 	{
 		foreach(Worker worker in workers) worker.AdjustMood(howMuch);
 	}
-	private void AdjustGroupCommunication(float howMuch)
+	/*private void ReduceGroupFrustration(float howMuch)
 	{
 		foreach(Worker worker in workers) worker.AdjustMood(howMuch);
-	}
+	}*/
+	/*private void AdjustGroupCommunication(float howMuch)
+	{
+		foreach(Worker worker in workers) worker.AdjustMood(howMuch);
+	}*/
 	
 	/////////////////////////// WORKERS  //////////////////////////////
 	
@@ -563,10 +572,24 @@ public class GameController : MonoBehaviour
 			mouseOverStyle.fontSize = 20;
 			GUI.Label( new Rect(offset.x, offset.y + 32f, 256, 24), "" + worker.GetWorkerType(), mouseOverStyle);
 			
+			// Draw Stars
+			Texture2D starbg = Textures.textures.starsbg;	// 480x96, 240x48, 160x32
+			Texture2D stars = Textures.textures.stars;
+			if(starbg && stars)
+			{
+				//Rect rect = new Rect(offset.x + (320f * 0.5f - 112f),  offset.y + 64f, 160f, 32f);
+				Rect rect = new Rect(offset.x + (320f * 0.5f - 112f),  offset.y + 64f, 160f, 32f);
+				GUI.DrawTexture( rect, starbg, ScaleMode.ScaleAndCrop);
+				Rect rect2 = new Rect(0, 0, 1, 1);
+				rect2.width *= (worker.starfloat / 5f);
+				rect.width *= (worker.starfloat / 5f);
+				GUI.DrawTextureWithTexCoords( rect, stars, rect2);
+			}
+			
 			Texture2D texture = worker.GetMoodTexture();
 			if(texture != null) 
 			{
-				Rect rect = new Rect(offset.x + (320f * 0.5f - 64f),  offset.y + 64f, 64f, 64f);
+				Rect rect = new Rect(offset.x + (320f * 0.5f - 64f),  offset.y + 100f, 64f, 64f);
 				GUI.DrawTexture( rect, texture);
 				float mood = worker.GetMood();
 				GUI.Label(rect, new GUIContent("", worker.GetCurrentMood() + " (" + mood.ToString("f0") + "/100)"));
@@ -576,7 +599,7 @@ public class GameController : MonoBehaviour
 			else if(mood <= 66f && mood > 33f) GUI.DrawTexture( new Rect(offset.x + (320f * 0.5f - 64f),  offset.y + 64f, 64f, 64f), MoodTextures.textures.neutral);
 			else if(mood <= 33f) GUI.DrawTexture( new Rect(offset.x + (320f * 0.5f - 64f),  offset.y + 64f, 64f, 64f), MoodTextures.textures.angry);*/
 			
-			worker.DrawBadges(new Vector2(offset.x + (320f * 0.5f - 104f), Screen.height - 112f), 48f, 48f);
+			worker.DrawBadges(new Vector2(offset.x + (320f * 0.5f - 104f), offset.y + 172f), 48f, 48f);
 		}
 		
 		/*if(cameraRaycaster != null && cameraRaycaster.mouseOverWorker != null)
@@ -634,6 +657,23 @@ public class GameController : MonoBehaviour
 		}
 	}
 	
+	private void SpawnWorkers(bool generateNewWorkers)
+	{
+		if(generateNewWorkers)
+		{
+			SpawnWorkers();
+			return;
+		}
+		
+		for(int i = 0; i < workers.Count - 1; i++)
+		{
+			//GameObject obj = workers[i].gameObject;
+			Vector3 pos = workers[i].GetPosition();
+			pos.x -= 3f;
+			workers[i].SetPosition(pos);
+		}
+	}
+	
 	// ------------------------ Worker List Management -------------------------------
 	
 	static public Worker AddWorker(GameObject newWorker, WorkerType type)
@@ -683,6 +723,16 @@ public class GameController : MonoBehaviour
 		}
 		
 		//Debug.Log("Workers at Workstations " + workersInWorkroom + "; In Conference " + workersInConference + "; In Recreation " + workersInRecreation);
+	}
+	
+	static public void SetWorkerList(List<Worker> workers)
+	{
+		workers = workers;
+		Debug.Log("Set workers.Count " + workers.Count);
+	}
+	static public void SetWorkerObjectList(List<GameObject> workers)
+	{
+		//workerObjects = workers;
 	}
 	
 	/////////////////////////// SNAPTARGET LIST //////////////////////////////

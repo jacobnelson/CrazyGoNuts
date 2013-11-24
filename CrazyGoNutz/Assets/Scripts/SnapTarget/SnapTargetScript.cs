@@ -4,6 +4,7 @@ using System.Collections;
 public class SnapTargetScript : MonoBehaviour
 {
 	public bool isRoom = false;
+	public bool isZone = false;
 	public SnapTargetType snapTargetType;
 	private SnapTarget snapTarget = null;
 	
@@ -34,6 +35,10 @@ public class SnapTargetScript : MonoBehaviour
 	public bool isARoom()
 	{
 		return isRoom;
+	}
+	public bool isAZone()
+	{
+		return isZone;
 	}
 	public Vector3 GetPosition()
 	{

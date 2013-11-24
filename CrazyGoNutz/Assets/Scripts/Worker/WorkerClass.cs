@@ -23,13 +23,13 @@ public class Worker
 	WorkerType workerType;						// Artist, AudioDesigner, or Programmer
 	bool mouseOver = false;
 	public GameObject gameObject = null;		// Associated GameObject within the Scene
+	public GameObject charObject = null;
+	public Animator anim = null;
 	ParticleSystem roadblockParticle = null;	// ParticleSystem used to show Roadblock
 	
 	public bool selected = false;
 	
-	//float productivity = 100;		// Ratio of communication AND frustration
-	//float communication = 100;		// Descreased by WORKING, Increased by CONFERRING
-	//float frustration = 1;			// Increased by WORKING and FAILURE, Descreased by RECREATION
+	public Vector3 startingPos = new Vector3();
 	
 	// PersonalBadges
 	public List<PersonalBadge> badges = new List<PersonalBadge>();
@@ -39,6 +39,15 @@ public class Worker
 	
 	SnapTarget lastSnapTarget = null;		// if currentSnapTarget is null, workers snap back to lastSnapTarget
 	SnapTarget currentSnapTarget = null;
+	
+	// Badge stats
+	float timeInRoom = 0f;	//2min straight needed for Working Hard Badge
+	int meetingsCompeted = 0;
+	int studentsHelpedThroughProblems = 0;
+	
+	// Stars
+	public float starfloat = 0f;
+	int stars = 0;
 	
 	// Roadblock
 	bool roadblocked = false;
@@ -52,29 +61,27 @@ public class Worker
 	public Worker(GameObject gameObject, WorkerType workerType)
 	{
 		this.gameObject = gameObject;
+		this.charObject = gameObject.transform.Find("Character").gameObject;
+		this.anim = charObject.GetComponent<Animator>();
 		this.workerType = workerType;
+		
+		this.startingPos = gameObject.transform.position;
 		
 		roadblockParticle = gameObject.GetComponentInChildren<ParticleSystem>();
 		if(roadblockParticle != null) roadblockParticle.Stop();
 		
-		switch(workerType)	// Change material color based on WorkerType
-		{
-			case WorkerType.Artist:
-				//gameObject.renderer.material.color = Color.cyan;
-				break;
-			case WorkerType.Programmer:
-				//gameObject.renderer.material.color = Color.grey;
-				break;
-			case WorkerType.AudioDesigner:
-				//gameObject.renderer.material.color = Color.green;
-				break;
-		}
+		starfloat = Random.Range(0f,5f);
 		
 		// Get 3 Random Personal Badges
+		List<string> badgeNames = new List<string>();
 		for(int i = 0; i < 3; i++)
 		{
-			PersonalBadge badge = new PersonalBadge(Random.Range(0,4));
-			badges.Add(badge);
+			PersonalBadge badge = new PersonalBadge(Random.Range(0,5));
+			if(!badgeNames.Contains(badge.name))
+			{
+				badges.Add(badge);
+				badgeNames.Add(badge.name);
+			} else i--;
 		}
 		
 		// Get Renderers
@@ -211,11 +218,11 @@ public class Worker
 	public Texture2D GetMoodTexture()
 	{
 		Texture2D texture = null;
-		if(mood > 80f) texture = MoodTextures.textures.happy;
-		else if(mood <= 80f && mood > 60f) texture = MoodTextures.textures.lesshappy;
-		else if(mood <= 60f && mood > 40f) texture = MoodTextures.textures.neutral;
-		else if(mood <= 40f && mood > 20f) texture = MoodTextures.textures.lessangry;
-		else if(mood <= 20f) texture = MoodTextures.textures.angry;
+		if(mood > 80f) texture = Textures.textures.happy;
+		else if(mood <= 80f && mood > 60f) texture = Textures.textures.lesshappy;
+		else if(mood <= 60f && mood > 40f) texture = Textures.textures.neutral;
+		else if(mood <= 40f && mood > 20f) texture = Textures.textures.lessangry;
+		else if(mood <= 20f) texture = Textures.textures.angry;
 		
 		return texture;
 	}
@@ -390,6 +397,8 @@ public class Worker
 		lastSnapTarget = currentSnapTarget;										// Set lastSnapTarget to currentSnapTarget for later reference
 		if(currentSnapTarget != null) currentSnapTarget.SetWorker(null);		// Empty currentSnapTarget
 		currentSnapTarget = null;
+		
+		anim.SetBool("MouseDrag", true);
 	}
 	
 	public void EndDrag(SnapTarget snapTarget)
@@ -417,6 +426,8 @@ public class Worker
 		
 		SetPosition( pos );
 		gameObject.layer = 9;			// Default Layer
+		
+		anim.SetBool("MouseDrag", false);
 	}
 	
 	/////////////////////////// POSITION //////////////////////////////
@@ -424,6 +435,10 @@ public class Worker
 	public Vector3 GetPosition()
 	{
 		return gameObject.transform.position;
+	}
+	public Vector3 GetStartingPosition()
+	{
+		return startingPos;
 	}
 	public void SetPosition(Vector3 pos)
 	{

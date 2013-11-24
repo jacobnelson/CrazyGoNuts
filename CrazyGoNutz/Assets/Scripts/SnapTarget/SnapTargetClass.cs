@@ -6,6 +6,7 @@ public class SnapTarget
 	private SnapTargetType snapTargetType;
 	//private SnapTargetScript script = null;
 	private bool room = false;
+	private bool zone = false;
 	
 	private bool empty = true;
 	public Worker currentWorker = null;
@@ -18,6 +19,9 @@ public class SnapTarget
 		this.workStation = gameObject;
 		this.snapTargetType = snapTargetType;
 		this.room = room;
+		
+		SnapTargetScript script = workStation.GetComponent<SnapTargetScript>();
+		this.zone = script.isAZone();
 	}
 	
 	/////////////////////////// MOUSE OVER //////////////////////////////
@@ -45,6 +49,10 @@ public class SnapTarget
 	public bool isRoom()
 	{
 		return room;
+	}
+	public bool isZone()
+	{
+		return zone;
 	}
 	public bool isEmpty()
 	{
