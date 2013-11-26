@@ -1,7 +1,7 @@
 Initialize engine version: 4.2.1f4 (4d30acc925c2)
 GfxDevice: creating device client; threaded=1
 Direct3D:
-    Version:  Direct3D 9.0c [aticfx64.dll 8.17.10.1172]
+    Version:  Direct3D 9.0c [aticfx32.dll 8.17.10.1172]
     Renderer: ATI Radeon HD 5700 Series
     Vendor:   ATI
     VRAM:     1012 MB (via DXGI)
@@ -17,31 +17,31 @@ Platform assembly: C:\Users\Wazimog2\Documents\GitHub\CrazyGoNuts\build001_Data\
 Loading C:\Users\Wazimog2\Documents\GitHub\CrazyGoNuts\build001_Data\Managed\Assembly-UnityScript-firstpass.dll into Unity Child Domain
 Platform assembly: C:\Users\Wazimog2\Documents\GitHub\CrazyGoNuts\build001_Data\Managed\Assembly-UnityScript.dll (this message is harmless)
 Loading C:\Users\Wazimog2\Documents\GitHub\CrazyGoNuts\build001_Data\Managed\Assembly-UnityScript.dll into Unity Child Domain
-- Completed reload, in  0.049 seconds
+- Completed reload, in  0.053 seconds
 desktop: 1920x1080 60Hz; virtual: 1920x1080 at 0,0
 <RI> Initializing input.
 <RI> Input initialized.
-UnloadTime: 0.354719 ms
+UnloadTime: 0.339564 ms
 Unloading 3 Unused Serialized files (Serialized files now loaded: 0 / Dirty serialized files: 0)
 
 Unloading 4 unused Assets to reduce memory usage. Loaded Objects now: 133.
-Total: 0.510276 ms (FindLiveObjects: 0.009896 ms CreateObjectMapping: 0.010514 ms MarkObjects: 0.067418 ms  DeleteObjects: 0.012370 ms)
+Total: 0.564703 ms (FindLiveObjects: 0.015153 ms CreateObjectMapping: 0.011751 ms MarkObjects: 0.064634 ms  DeleteObjects: 0.012370 ms)
 
-UnloadTime: 0.293486 ms
+UnloadTime: 0.274620 ms
 Unloading 3 Unused Serialized files (Serialized files now loaded: 0 / Dirty serialized files: 0)
 
 Unloading 30 unused Assets to reduce memory usage. Loaded Objects now: 304.
-Total: 0.712221 ms (FindLiveObjects: 0.014535 ms CreateObjectMapping: 0.011442 ms MarkObjects: 0.118755 ms  DeleteObjects: 0.114734 ms)
+Total: 0.692736 ms (FindLiveObjects: 0.013607 ms CreateObjectMapping: 0.012988 ms MarkObjects: 0.093395 ms  DeleteObjects: 0.109786 ms)
 
 Set workers.Count 6
  
 (Filename: C:/BuildAgent/work/cac08d8a5e25d4cb/Runtime/ExportGenerated/StandalonePlayer/UnityEngineDebug.cpp Line: 54)
 
-UnloadTime: 1.110236 ms
+UnloadTime: 1.076215 ms
 Unloading 3 Unused Serialized files (Serialized files now loaded: 0 / Dirty serialized files: 0)
 
 Unloading 91 unused Assets to reduce memory usage. Loaded Objects now: 1224.
-Total: 1.300739 ms (FindLiveObjects: 0.055357 ms CreateObjectMapping: 0.025977 ms MarkObjects: 0.303382 ms  DeleteObjects: 0.504400 ms)
+Total: 1.314652 ms (FindLiveObjects: 0.055975 ms CreateObjectMapping: 0.036801 ms MarkObjects: 0.246168 ms  DeleteObjects: 0.533778 ms)
 
 workers.Count 6
  

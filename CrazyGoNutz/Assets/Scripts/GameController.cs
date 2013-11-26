@@ -76,6 +76,7 @@ public class GameController : MonoBehaviour
 	private List<Task> taskList = new List<Task>();
 	private Task currentTask = null;
 	private int currentTaskIndex = 0;
+	private float taskDelayCounter = 0f;
 	
 	// Meeting
 	private Meeting meeting = null;
@@ -225,11 +226,12 @@ public class GameController : MonoBehaviour
 			// Check Milestone?
 			currentTaskIndex++;
 			currentTask = null;
-			//FloatingText.AddText("Task Complete!!", Vector3.zero, new Vector3(0,0.5f,0), 36f, 3.6f, Color.white);
+
 			Banner.AddScalingBanner("Task Complete!!", 82f, new Vector3(Screen.width /2, Screen.height/2 - 256f,0), 0.55f, Interpolate.EaseType.EaseOutSine, new float[]{0,0.85f,1f}, new float[]{1f,0f,2.5f},1f);
+			taskDelayCounter -= Time.deltaTime;
 		}
 		
-		if(currentTask == null && currentTaskIndex < taskList.Count) currentTask = taskList[currentTaskIndex];
+		if(currentTask == null && currentTaskIndex < taskList.Count && taskDelayCounter <= 0) currentTask = taskList[currentTaskIndex];
 		
 		if(currentTask != null) currentTask.Update();
 	}
