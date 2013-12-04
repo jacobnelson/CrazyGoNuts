@@ -182,25 +182,28 @@ public class CharSelectScript : MonoBehaviour
 				// Get Gender
 				int gender = Random.Range (0,2);	//0 girl, 1 boy
 
+				GameObject obj = null;
 				if(type == 0) // Artist
 				{
-
+					if(gender == 0) obj = Instantiate(artistFemale, Vector3.zero, Quaternion.identity) as GameObject;
+					else obj = Instantiate(artistMale, Vector3.zero, Quaternion.identity) as GameObject;
 				} 
 				else if(type == 1) // AudioDesigner
 				{
-					
+					if(gender == 0) obj = Instantiate(sounddesignerFemale, Vector3.zero, Quaternion.identity) as GameObject;
+					else obj = Instantiate(sounddesignerMale, Vector3.zero, Quaternion.identity) as GameObject;
 				}
 				else if(type == 2) // Programmer
 				{
-					
+					if(gender == 0) obj = Instantiate(programmerFemale, Vector3.zero, Quaternion.identity) as GameObject;
+					else obj = Instantiate(programmerMale, Vector3.zero, Quaternion.identity) as GameObject;
 				}
 
-				GameObject obj = null;
 				Vector3 pos = new Vector3();
 				pos.x = Random.Range(-2.0f, 2.0f) - 3f;
 				pos.y = 0.0f;
 				pos.z = Random.Range(-2.0f, 2.0f);
-				obj = Instantiate(workerPrefab, Vector3.zero, Quaternion.identity) as GameObject;
+				//obj = Instantiate(workerPrefab, Vector3.zero, Quaternion.identity) as GameObject;
 				obj.transform.localEulerAngles = new Vector3(0f,180f,0f);
 				obj.transform.position = pos;
 				
@@ -208,7 +211,7 @@ public class CharSelectScript : MonoBehaviour
 				
 
 				
-				script.SetWorker( AddWorker(obj, (WorkerType)type) );
+				script.SetWorker( AddWorker(obj, (WorkerType)type, gender) );
 			}
 		}
 	}
@@ -219,10 +222,10 @@ public class CharSelectScript : MonoBehaviour
 	
 	// ------------------------ Worker List Management -------------------------------
 	
-	static public Worker AddWorker(GameObject newWorker, WorkerType type)
+	static public Worker AddWorker(GameObject newWorker, WorkerType type, int gender)
 	{
 		Worker worker = null;
-		worker = new Worker(newWorker, type);
+		worker = new Worker(newWorker, type, gender);
 		workers.Add(worker);
 		
 		return worker;

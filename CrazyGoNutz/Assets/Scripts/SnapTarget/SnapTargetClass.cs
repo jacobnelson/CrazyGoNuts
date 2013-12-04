@@ -13,6 +13,8 @@ public class SnapTarget
 	public GameObject workStation = null;	// Associated GameObject within the Scene
 	
 	private bool mouseOver = false;
+
+	public string animation = "Idle";
 	
 	public SnapTarget(GameObject gameObject, SnapTargetType snapTargetType, bool room)
 	{
@@ -22,6 +24,7 @@ public class SnapTarget
 		
 		SnapTargetScript script = workStation.GetComponent<SnapTargetScript>();
 		this.zone = script.isAZone();
+		this.animation = script.animation.ToString();
 	}
 	
 	/////////////////////////// MOUSE OVER //////////////////////////////

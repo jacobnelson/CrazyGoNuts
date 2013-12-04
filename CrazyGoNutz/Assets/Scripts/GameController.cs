@@ -47,7 +47,7 @@ public class GameController : MonoBehaviour
 	public const float DECREASE = -2.0f;
 	public const float SLIGHT_DECREASE = -0.25f;
 	
-	public const float WORK_RATE = 0.45f;	// How much work a Worker does per second // 0.6f
+	public const float WORK_RATE = 0.5f;	// How much work a Worker does per second // 0.6f
 	public const float TARGET_WORK_PERCENTAGE = 0.2f;	// Percentage of work capacity needed to keep up with deadline
 		
 	public const float MILESTONE_MOOD_INCREASE = 10.0f;
@@ -241,7 +241,7 @@ public class GameController : MonoBehaviour
 			currentTaskIndex++;
 			currentTask = null;
 
-			Banner.AddScalingBanner("Task Complete!!", 82f, new Vector3(Screen.width /2, Screen.height * 0.5f + 320f,0), 0.65f, Interpolate.EaseType.EaseOutSine, new float[]{0,0.65f,1f}, new float[]{1f,0f,2.5f},1f, BannerColor.Yellow);
+			Banner.AddScalingBanner("Task Complete!!", 82f, new Vector3(Screen.width /2, Screen.height * 0.5f - 512f,0), 0.65f, Interpolate.EaseType.EaseOutSine, new float[]{0,0.65f,1f}, new float[]{1f,0f,2.5f},1f, BannerColor.Yellow);
 			taskDelayCounter = 4f;
 		}
 		
@@ -688,7 +688,7 @@ public class GameController : MonoBehaviour
 				int type = i;
 				if(type > 2) type = Random.Range(0,3);
 				
-				script.SetWorker( AddWorker(obj, (WorkerType)type) );
+				script.SetWorker( AddWorker(obj, (WorkerType)type, 0) );
 			}
 		}
 	}
@@ -713,10 +713,10 @@ public class GameController : MonoBehaviour
 	
 	// ------------------------ Worker List Management -------------------------------
 	
-	static public Worker AddWorker(GameObject newWorker, WorkerType type)
+	static public Worker AddWorker(GameObject newWorker, WorkerType type, int gender)
 	{
 		Worker worker = null;
-		worker = new Worker(newWorker, type);
+		worker = new Worker(newWorker, type, gender);
 		workers.Add(worker);
 		
 		return worker;

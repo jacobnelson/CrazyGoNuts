@@ -7,6 +7,8 @@ public class SnapTargetScript : MonoBehaviour
 	public bool isZone = false;
 	public SnapTargetType snapTargetType;
 	private SnapTarget snapTarget = null;
+
+	public WorkerAnimation animation;
 	
 	void Awake () 
 	{

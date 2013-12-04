@@ -21,6 +21,7 @@ public class Worker
 {	
 	public string name = "WorkerName";	
 	WorkerType workerType;						// Artist, AudioDesigner, or Programmer
+	public int gender = 0;						// 0 - female; 1 - male
 	bool mouseOver = false;
 	public GameObject gameObject = null;		// Associated GameObject within the Scene
 	public GameObject charObject = null;
@@ -36,6 +37,7 @@ public class Worker
 	
 	float mood = 100f;
 	string currentMood = "Happy";
+	string currentAnimation = "MouseDrag";
 	
 	SnapTarget lastSnapTarget = null;		// if currentSnapTarget is null, workers snap back to lastSnapTarget
 	SnapTarget currentSnapTarget = null;
@@ -58,7 +60,7 @@ public class Worker
 	//private List<Renderer> renderers = new List<Renderer>();
 	private Renderer[] renderers;
 	
-	public Worker(GameObject gameObject, WorkerType workerType)
+	public Worker(GameObject gameObject, WorkerType workerType, int gender)
 	{
 		this.gameObject = gameObject;
 		this.charObject = gameObject.transform.Find("Character").gameObject;
@@ -66,6 +68,7 @@ public class Worker
 		this.workerType = workerType;
 		
 		this.startingPos = gameObject.transform.position;
+		this.gender = gender;
 		
 		roadblockParticle = gameObject.GetComponentInChildren<ParticleSystem>();
 		if(roadblockParticle != null) roadblockParticle.Stop();
@@ -455,8 +458,10 @@ public class Worker
 		lastSnapTarget = currentSnapTarget;										// Set lastSnapTarget to currentSnapTarget for later reference
 		if(currentSnapTarget != null) currentSnapTarget.SetWorker(null);		// Empty currentSnapTarget
 		currentSnapTarget = null;
-		
-		anim.SetBool("MouseDrag", true);
+
+		anim.SetBool(currentAnimation, false);
+		currentAnimation = "MouseDrag";
+		anim.SetBool(currentAnimation, true);
 	}
 	
 	public void EndDrag(SnapTarget snapTarget)
@@ -498,8 +503,14 @@ public class Worker
 		
 		SetPosition( pos );
 		gameObject.layer = 9;			// Default Layer
-		
-		anim.SetBool("MouseDrag", false);
+
+		// Get Animation Name from currentSnapTarget
+		Debug.Log ("Play animation " + currentSnapTarget.animation +", Stop animation "+ currentAnimation);
+		anim.SetBool(currentAnimation, false);
+		currentAnimation = currentSnapTarget.animation;
+		anim.SetBool(currentAnimation, true);
+
+
 	}
 	
 	/////////////////////////// POSITION //////////////////////////////
@@ -524,4 +535,13 @@ public enum WorkerType
 	Artist,
 	AudioDesigner,
 	Programmer
+}
+public enum WorkerAnimation
+{
+	Idle,
+	Working,
+	Frustrated,
+	Meeting,
+	Happy,
+	LookAround
 }

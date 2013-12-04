@@ -43,11 +43,26 @@ public class WorkerScript : MonoBehaviour
 	public void SetWorker(Worker worker)	// Sets the Worker Class Instance
 	{
 		this.worker = worker;
-		worker.name = "Worker" + (int)Random.Range(0,1000);	//TODO: Temp for debug.
+		worker.name = GetRandomName(worker.gender);
 		name = worker.name;
+
+		//name = GetRandomName(worker.gender);
 	}
 	public void DontDestroy()
 	{
 		DontDestroyOnLoad(gameObject);
+	}
+	private string GetRandomName(int gender)
+	{
+		string newname = "Name";
+		string[] names;
+
+		if(gender == 0) names = new string[]{"Sally","Jane","Britney","Becky","Sophia","Emma","Isabella","Olivia","Ava","Emily","Mia","Madison","Elizabeth","Megan","Lily","Angela","Zoey","Amelia"};
+		else names = new string[]{"Jim","Bert","Ben","John","Jacob","Jayson","Kevin","Eric","Ethan","Will","Michael","James","Andy","Luke","Isaac","Dylan","Dan","Evan","Adam","Tom","Chris","Levi"};
+
+		int rand = Random.Range (0,names.Length);
+		newname = names[rand];
+
+		return newname;
 	}
 }
