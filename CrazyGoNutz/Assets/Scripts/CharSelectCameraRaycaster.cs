@@ -26,6 +26,9 @@ public class CharSelectCameraRaycaster : MonoBehaviour
 	GameObject mouseOverObject = null;
 	public Worker mouseOverWorker = null;
 	//SnapTarget mouseOverSnapTarget = null;
+
+	// GUIStyles
+	public GUIStyle mouseOverStyle;
 	
 	// Drag and Drop Stuff
 	Worker dragObject = null;
@@ -58,7 +61,59 @@ public class CharSelectCameraRaycaster : MonoBehaviour
 		
 		lastMousePos = mousePos;
 	}
-	
+
+	void OnGUI()
+	{
+		DrawWorkerStats();
+	}
+
+
+	private void DrawWorkerStats()
+	{
+		Worker worker = null;
+		/*if(cameraRaycaster != null)
+		{
+			if(cameraRaycaster.mouseOverWorker != null) worker =  cameraRaycaster.mouseOverWorker;
+			else if(cameraRaycaster.selectedworker != null) worker =  cameraRaycaster.selectedworker;
+		}*/
+
+		worker = mouseOverWorker;
+		if(selectedworker != null) worker = selectedworker;
+		
+		if(worker != null)
+		{
+			Vector2 offset = new Vector2(Screen.width * 0.5f - 128f, Screen.height - 256f);
+			mouseOverStyle.fontSize = 24;
+			GUI.Label( new Rect(offset.x, offset.y, 256, 24), "" + worker.name, mouseOverStyle);
+			mouseOverStyle.fontSize = 20;
+			GUI.Label( new Rect(offset.x, offset.y + 32f, 256, 24), "" + worker.GetWorkerType(), mouseOverStyle);
+			
+			// Draw Stars
+			/*Texture2D starbg = Textures.textures.starsbg;	// 480x96, 240x48, 160x32
+			Texture2D stars = Textures.textures.stars;
+			if(starbg && stars)
+			{
+				//Rect rect = new Rect(offset.x + (320f * 0.5f - 112f),  offset.y + 64f, 160f, 32f);
+				Rect rect = new Rect(offset.x + (320f * 0.5f - 112f),  offset.y + 64f, 160f, 32f);
+				GUI.DrawTexture( rect, starbg, ScaleMode.ScaleAndCrop);
+				Rect rect2 = new Rect(0, 0, 1, 1);
+				rect2.width *= (worker.starfloat / 5f);
+				rect.width *= (worker.starfloat / 5f);
+				GUI.DrawTextureWithTexCoords( rect, stars, rect2);
+			}
+			
+			Texture2D texture = worker.GetMoodTexture();
+			if(texture != null) 
+			{
+				Rect rect = new Rect(offset.x + (320f * 0.5f - 64f),  offset.y + 100f, 64f, 64f);
+				GUI.DrawTexture( rect, texture);
+				float mood = worker.GetMood();
+				GUI.Label(rect, new GUIContent("", worker.GetCurrentMood() + " (" + mood.ToString("f0") + "/100)"));
+			}
+
+			worker.DrawBadges(new Vector2(offset.x + (320f * 0.5f - 104f), offset.y + 172f), 48f, 48f);*/
+		}
+	}
 	
 	
 	/////////////////////////// MOUSE INPUT //////////////////////////////
@@ -239,6 +294,7 @@ public class CharSelectCameraRaycaster : MonoBehaviour
 			dragObject.anim.SetBool("MouseDrag", false);
 			
 			dragObject = null;
+			selectedworker = null;
 		}
 	}
 	

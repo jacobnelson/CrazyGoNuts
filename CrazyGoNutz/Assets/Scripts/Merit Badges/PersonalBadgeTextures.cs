@@ -47,7 +47,7 @@ public class PersonalBadge : MeritBadge			// These are only for the WORKERS
 			break;
 		case 2:
 			this.name = "Takin' It Easy";
-			this.tooltip = "Spend 2 minutes straight in the Recreation Room while 'Happy'";
+			this.tooltip = "Spend 1 minute straight in the Recreation Room while 'Happy'";
 			this.completedTex = PersonalBadgeTextures.textures.texture01;
 			this.emptyTex = PersonalBadgeTextures.textures.textureOutline01;
 			break;

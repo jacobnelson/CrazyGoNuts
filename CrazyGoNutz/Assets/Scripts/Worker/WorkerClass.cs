@@ -42,8 +42,8 @@ public class Worker
 	
 	// Badge stats
 	float timeInRoom = 0f;	//2min straight needed for Working Hard Badge
-	int meetingsCompeted = 0;
-	int studentsHelpedThroughProblems = 0;
+	int meetingsCompleted = 0;
+	int studentsHelped = 0;
 	
 	// Stars
 	public float starfloat = 0f;
@@ -96,27 +96,28 @@ public class Worker
 		if(currentSnapTarget != null)
 		{
 			SnapTargetType type = currentSnapTarget.GetType();
+			timeInRoom += Time.deltaTime;
 			switch(type)
 			{
 				case SnapTargetType.Conference:
 					if(GameController.WorkersInConference > 1)
 					{
-						//AdjustCommunication(GameController.INCREASE * Time.deltaTime);
 						if(roadblocked) RemoveRoadblock();
 					}
+					// Check For Badge
+				
 					break;
 				case SnapTargetType.Recreation:
-					//AdjustFrustration(GameController.DECREASE * Time.deltaTime);
-					//AdjustFrustration(GameController.SLIGHT_DECREASE * (float)GameController.WorkersInRecreation * Time.deltaTime);	// More workers in RecRoom reduces frustration faster
-					//AdjustCommunication(GameController.SLIGHT_INCREASE * Time.deltaTime);
 					AdjustMood(GameController.SLIGHT_INCREASE * (float)GameController.WorkersInRecreation * Time.deltaTime);	// More workers in RecRoom reduces frustration faster
 					AdjustMood(GameController.INCREASE * Time.deltaTime);	
+					// Check For Badge "Takin' It Easy"
+					if(timeInRoom > 60) CheckForBadgeCompletion("Takin' It Easy");
 				break;
 				case SnapTargetType.Workstation:
-					//AdjustFrustration(GameController.INCREASE * Time.deltaTime);
-					//AdjustCommunication(GameController.SLIGHT_DECREASE * Time.deltaTime);
 					AdjustMood(GameController.SLIGHT_DECREASE * Time.deltaTime);
 					if(roadblocked) AdjustMood(GameController.DECREASE * Time.deltaTime);
+					// Check For Badge "Working Hard"
+					if(timeInRoom > 120) CheckForBadgeCompletion("Working Hard");
 					break;
 			}
 		}
@@ -148,7 +149,7 @@ public class Worker
 
 	}
 	
-	/////////////////////////// DRAW BADGES //////////////////////////////
+	///////////////////////////  BADGES //////////////////////////////
 	
 	public void DrawBadges(Vector2 offset, float margin, float size)	// Only run from OnGUI() in GameController
 	{
@@ -159,6 +160,33 @@ public class Worker
 			if(badges[i].completed) GUI.Label(rect, new GUIContent("",badges[i].tooltip + " Completed!"));
 			else GUI.Label(rect, new GUIContent("",badges[i].tooltip));
 		}
+	}
+	
+	public void CheckForBadgeCompletion(string badgeName)
+	{
+		foreach(PersonalBadge badge in badges)
+		{
+			if(badgeName == badge.name && !badge.completed)
+			{
+				badge.completed = true;
+				// Spawn Particle!
+				Vector3 pos = gameObject.transform.position;
+				pos.y = 1.5f;
+				SpawnParticle.SpawnBadgearticle( pos, gameObject.transform, badge.completedTex);
+				return;
+			}
+		}
+	}
+	public bool HasBadge(string badgeName)
+	{
+		foreach(PersonalBadge badge in badges) if(badgeName == badge.name && !badge.completed) return true;
+		return false;
+	}
+
+	public bool CompletedAllBadges()
+	{
+		foreach(PersonalBadge badge in badges) if(!badge.completed) return false;
+		return true;
 	}
 	
 	/////////////////////////// ROADBLOCK //////////////////////////////
@@ -197,6 +225,8 @@ public class Worker
 			Vector3 pos = gameObject.transform.position;
 			pos.y = 1.5f;
 			SpawnParticle.SpawnMoodParticle( pos, GetMoodTexture());
+
+			if(currentMood == "Angry") GameController.studentBecameAngry = true;
 		}
 	}
 	
@@ -229,6 +259,22 @@ public class Worker
 	
 	/////////////////////////// STATS //////////////////////////////
 	
+	public void AddToStarPower(float amount)
+	{
+		starfloat += amount;
+		if(starfloat > 5.0f) starfloat = 5.0f;
+		if(starfloat - 1.0f > stars) // Completed a Star
+		{
+			stars++;
+			Debug.Log("gained a star!");
+		}
+	}
+	public int GetStars()
+	{
+		return stars;
+	}
+	
+	/////////////////////////// STATS //////////////////////////////
 	
 	/*public float GetMoodPercent()
 	{
@@ -277,6 +323,18 @@ public class Worker
 	public bool Roadblocked()
 	{
 		return roadblocked;	
+	}
+	public void CompletedMeeting()
+	{
+		this.meetingsCompleted++;
+		// Check For Badge "Chatterbox"
+		if(meetingsCompleted >= 3) CheckForBadgeCompletion("Chatterbox");
+	}
+	public void HelpedOtherStudent()
+	{
+		this.studentsHelped++;
+		// Check For Badge "Helping Hands"
+		CheckForBadgeCompletion("Helping Hands");
 	}
 	
 	/////////////////////////// WORKER TYPE //////////////////////////////
@@ -405,6 +463,11 @@ public class Worker
 	{
 		if(snapTarget != null)		// Set pos to snapTarget 
 		{
+			if(currentSnapTarget != null) 
+			{
+				lastSnapTarget = currentSnapTarget;
+				//Debug.Log("setting lastSnapTarget to " + currentSnapTarget.ToString());
+			}
 			if(snapTarget.isEmpty()) currentSnapTarget = snapTarget; 	// If snapTarget is empty, snap to it
 			else currentSnapTarget = GameController.FindOpenSnapTargetOfType( snapTarget.GetType() );	// else, find empty snapTarget of same type
 		}
@@ -415,6 +478,15 @@ public class Worker
 
 			currentSnapTarget = lastSnapTarget;
 		}
+		
+		//Debug.Log("currentSnapTarget " + currentSnapTarget + " , lastSnapTarget " + lastSnapTarget);
+		if(currentSnapTarget != null && lastSnapTarget != null)	// Check For timeInRoom reset
+		{
+			//Debug.Log(""+currentSnapTarget.GetType() +", "+lastSnapTarget.GetType());
+			if(currentSnapTarget.GetType() != lastSnapTarget.GetType())	timeInRoom = 0f; // If switched room type, reset timeInRoom
+		}
+		Debug.Log("Worker.timeInRoom = " + timeInRoom);
+		
 		
 		if(currentSnapTarget == null) return;
 		

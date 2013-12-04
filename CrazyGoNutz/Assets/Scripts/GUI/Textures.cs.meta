@@ -1,0 +1,11 @@
+fileFormatVersion: 2
+guid: ef5f7d9bca045e845bcf4d98f9292291
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences:
+  - happygreen: {fileID: 2800000, guid: 80e96411755a1574ba37cdf148a2e4c0, type: 3}
+  - neutralyellow: {fileID: 2800000, guid: a40326d456f164141bcdb085f2f26a60, type: 3}
+  - angryred: {fileID: 2800000, guid: bba2f21bcfa7f6245801325388a5b085, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 

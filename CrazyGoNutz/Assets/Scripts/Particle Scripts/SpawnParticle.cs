@@ -8,7 +8,8 @@ public class SpawnParticle : MonoBehaviour
 	
 	// Particle System Prefabs
 	public GameObject moodParticleSystem = null;
-	
+	public GameObject badgeParticleSystem = null;
+	public GameObject teambadgeParticleSystem = null;
 	
 	// Initialization
 	void Awake () 
@@ -27,5 +28,20 @@ public class SpawnParticle : MonoBehaviour
 		GameObject partsys = null;
 		partsys = Instantiate(spawnParticle.moodParticleSystem, where, Quaternion.identity) as GameObject;
 		partsys.renderer.material.mainTexture = texture;
+	}
+	
+	static public void SpawnBadgearticle(Vector3 where, Transform target, Texture2D texture)
+	{
+		GameObject partsys = null;
+		partsys = Instantiate(spawnParticle.badgeParticleSystem, where, Quaternion.identity) as GameObject;
+		partsys.renderer.material.mainTexture = texture;
+		partsys.transform.parent = target;
+	}
+	static public void SpawnTeamBadgearticle(Transform target, Texture2D texture)
+	{
+		GameObject partsys = null;
+		partsys = Instantiate(spawnParticle.teambadgeParticleSystem, new Vector3(-1.5f, 3, -1.5f), Quaternion.identity) as GameObject;
+		partsys.renderer.material.mainTexture = texture;
+		partsys.transform.parent = target;
 	}
 }

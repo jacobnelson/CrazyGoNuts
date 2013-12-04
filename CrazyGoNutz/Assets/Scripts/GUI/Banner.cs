@@ -8,10 +8,13 @@ public class Banner
 	static List<Banner> bannerList = new List<Banner>();
 	static public GUIStyle style = null;
 	static public Texture2D bannerTexture = null;
+	static public Texture2D bannerblueTexture = null;
 	
 	// Instance Variables
 	string text = "";
 	Vector3 position = new Vector3();
+
+	BannerColor color = BannerColor.Yellow;
 	
 	float startValue = 1.0f;
 	float endValue = 3.0f;
@@ -42,7 +45,7 @@ public class Banner
 		this.duration = duration;
 	}*/
 	
-	public Banner(string text, float fontSize, Vector3 position, float scale, Interpolate.EaseType easeType, float[] introAction, float[] outroAction, float delay)
+	public Banner(string text, float fontSize, Vector3 position, float scale, Interpolate.EaseType easeType, float[] introAction, float[] outroAction, float delay, BannerColor color)
 	{
 		this.text = text;
 		this.position = position;
@@ -52,6 +55,7 @@ public class Banner
 		this.delay = delay;
 		this.scale = scale;
 		this.fontSize = fontSize;
+		this.color = color;
 	}
 	
 	public void Update()
@@ -101,16 +105,16 @@ public class Banner
 
 	////////////////////////////////////////////////////////////////
 	
-	static public void AddMovingBanner(string text, float fontSize, Vector3 position, float scale, Interpolate.EaseType easeType, float[] introAction, float[] outroAction, float delay)
+	static public void AddMovingBanner(string text, float fontSize, Vector3 position, float scale, Interpolate.EaseType easeType, float[] introAction, float[] outroAction, float delay, BannerColor color)
 	{
-		var banner = new Banner( text, fontSize, position, scale, easeType,  introAction, outroAction, delay);
+		var banner = new Banner( text, fontSize, position, scale, easeType,  introAction, outroAction, delay, color);
 		bannerList.Add(banner);
 		banner.moving = true;
 		banner.scaling = false;
 	}
-	static public void AddScalingBanner(string text, float fontSize, Vector3 position, float scale, Interpolate.EaseType easeType, float[] introAction, float[] outroAction, float delay)
+	static public void AddScalingBanner(string text, float fontSize, Vector3 position, float scale, Interpolate.EaseType easeType, float[] introAction, float[] outroAction, float delay, BannerColor color)
 	{
-		var banner = new Banner( text, fontSize, position, scale, easeType,  introAction, outroAction, delay);
+		var banner = new Banner( text, fontSize, position, scale, easeType,  introAction, outroAction, delay, color);
 		bannerList.Add(banner);
 		banner.moving = false;
 		banner.scaling = true;
@@ -160,8 +164,15 @@ public class Banner
 			style.fontSize = (int)fontSize;
 			if(style.fontSize > 200) style.fontSize = 200;
 			if(style.fontSize <= 1) style.fontSize = 0;
-			GUI.DrawTexture(rect, Banner.bannerTexture);
+			if(banner.color == BannerColor.Yellow)GUI.DrawTexture(rect, Banner.bannerTexture);
+			else if(banner.color == BannerColor.Blue)GUI.DrawTexture(rect, Banner.bannerblueTexture);
 			if(style.fontSize > 1)GUI.Label(rect, banner.text, style);
 		}
 	}
+}
+
+public enum BannerColor
+{
+	Yellow,
+	Blue
 }

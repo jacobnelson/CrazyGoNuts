@@ -14,6 +14,12 @@ public class CharSelectScript : MonoBehaviour
 	
 	// Worker Prefab
 	public GameObject workerPrefab = null;
+	public GameObject artistMale = null;
+	public GameObject artistFemale = null;
+	public GameObject programmerMale = null;
+	public GameObject programmerFemale = null;
+	public GameObject sounddesignerMale = null;
+	public GameObject sounddesignerFemale = null;
 	
 	// GUIStyles
 	public GUIStyle mouseOverStyle;
@@ -27,7 +33,7 @@ public class CharSelectScript : MonoBehaviour
 		SpawnWorkers();
 		
 		//Banner.AddMovingBanner("Choose Your Team!!", 82f, new Vector3(Screen.width /2, Screen.height/2,0), 0.65f, Interpolate.EaseType.EaseOutSine, new float[]{-512f, Screen.height * 0.5f + 256f, 3f}, new float[]{0f, -1 *(Screen.height * 0.5f + 256f), 3f}, 2.5f);
-		Banner.AddScalingBanner("Choose Your Team!!", 82f, new Vector3(Screen.width /2, Screen.height/2,0), 0.65f, Interpolate.EaseType.EaseOutSine, new float[]{0,0.85f,3f}, new float[]{1f,0f,2.5f},1f);
+		Banner.AddScalingBanner("Choose Your Team!!", 82f, new Vector3(Screen.width /2, Screen.height/2,0), 0.65f, Interpolate.EaseType.EaseOutSine, new float[]{0,0.75f,3f}, new float[]{1f,0f,2.5f},1f, BannerColor.Yellow);
 	}
 	
 	// Update is called once per frame 
@@ -170,24 +176,46 @@ public class CharSelectScript : MonoBehaviour
 		{
 			for(int i = 0; i < 15; i++)
 			{
+				// Get type, make sure at least one of each class
+				int type = i;
+				if(type > 2) type = Random.Range(0,3);
+				// Get Gender
+				int gender = Random.Range (0,2);	//0 girl, 1 boy
+
+				if(type == 0) // Artist
+				{
+
+				} 
+				else if(type == 1) // AudioDesigner
+				{
+					
+				}
+				else if(type == 2) // Programmer
+				{
+					
+				}
+
 				GameObject obj = null;
 				Vector3 pos = new Vector3();
 				pos.x = Random.Range(-2.0f, 2.0f) - 3f;
 				pos.y = 0.0f;
 				pos.z = Random.Range(-2.0f, 2.0f);
-				obj = Instantiate(workerPrefab, pos, Quaternion.identity) as GameObject;
+				obj = Instantiate(workerPrefab, Vector3.zero, Quaternion.identity) as GameObject;
 				obj.transform.localEulerAngles = new Vector3(0f,180f,0f);
+				obj.transform.position = pos;
 				
 				WorkerScript script = obj.GetComponent<WorkerScript>();
 				
-				// type, make sure at least one of each class
-				int type = i;
-				if(type > 2) type = Random.Range(0,3);
+
 				
 				script.SetWorker( AddWorker(obj, (WorkerType)type) );
 			}
 		}
 	}
+	/*private void CreateWorker(WorkerType type)
+	{
+
+	}*/
 	
 	// ------------------------ Worker List Management -------------------------------
 	

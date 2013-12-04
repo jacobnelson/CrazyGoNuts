@@ -24,7 +24,7 @@ public class GameController : MonoBehaviour
 	static public int AudioDesigners = 0;
 	static public int TotalWorkers = 0;
 	
-	
+	static public GameController gameController = null;
 	
 	// Component Reference
 	CameraRaycaster cameraRaycaster = null;
@@ -47,7 +47,7 @@ public class GameController : MonoBehaviour
 	public const float DECREASE = -2.0f;
 	public const float SLIGHT_DECREASE = -0.25f;
 	
-	public const float WORK_RATE = 0.6f;	// How much work a Worker does per second
+	public const float WORK_RATE = 0.45f;	// How much work a Worker does per second // 0.6f
 	public const float TARGET_WORK_PERCENTAGE = 0.2f;	// Percentage of work capacity needed to keep up with deadline
 		
 	public const float MILESTONE_MOOD_INCREASE = 10.0f;
@@ -85,6 +85,7 @@ public class GameController : MonoBehaviour
 	// Milestones
 	//private List<Milestone> milestones = new List<Milestone>();
 	static public List<Milestone> milestones = new List<Milestone>();
+	static public int completedMilestones = 0;
 	//private Task currentTask = null;
 	//private int currentTaskIndex = 0;
 	
@@ -94,9 +95,7 @@ public class GameController : MonoBehaviour
 	private float initialDeadlineDelay = 5f;	//in seconds
 	
 	// Team Badges
-	/*private TeamBadge badge01 = null;
-	private TeamBadge badge02 = null;
-	private TeamBadge badge03 = null;*/
+	static public bool studentBecameAngry = false;		// for team badge
 	
 	// Textures
 	public Texture2D solidColorTex = null;
@@ -108,7 +107,11 @@ public class GameController : MonoBehaviour
 	// PerSecond Counter
 	private float counter = 0;
 	
-	// Use this for initialization
+	void Awake()
+	{
+		gameController = this;
+	}
+
 	void Start () 
 	{
 		cameraRaycaster = Camera.main.GetComponent<CameraRaycaster>();
@@ -149,6 +152,7 @@ public class GameController : MonoBehaviour
 		if(counter >= 1f)
 		{
 			CountWorkersPerRoom();		// Finds out which room the workers are in
+			counter = 0;
 		}
 		
 		// Update Task
@@ -162,6 +166,16 @@ public class GameController : MonoBehaviour
 		
 		// Deadline
 		UpdateDeadline();
+
+		// Badges
+		// Check For Team Badge "Pizza Party!"
+		if(WorkersInRecreation == 6 && completion > (deadlineCurrent / deadlineMax)) CheckForBadgeCompletion("Pizza Party!");
+		// Check For Team Badge "Flawless Victory!"
+		if(completedMilestones >= milestones.Count) CheckForBadgeCompletion("Flawless Victory!");
+		// Check For Team Badge "Cool as a Cucumber"
+		if(completion >= 98 && !studentBecameAngry) CheckForBadgeCompletion("Cool as a Cucumber");
+
+		CheckForMindBlownBadge();
 		
 		if(Input.GetKey(KeyCode.Tab)) tab = true;
 		else tab = false;
@@ -227,11 +241,20 @@ public class GameController : MonoBehaviour
 			currentTaskIndex++;
 			currentTask = null;
 
-			Banner.AddScalingBanner("Task Complete!!", 82f, new Vector3(Screen.width /2, Screen.height/2 - 256f,0), 0.55f, Interpolate.EaseType.EaseOutSine, new float[]{0,0.85f,1f}, new float[]{1f,0f,2.5f},1f);
-			taskDelayCounter -= Time.deltaTime;
+			Banner.AddScalingBanner("Task Complete!!", 82f, new Vector3(Screen.width /2, Screen.height * 0.5f + 320f,0), 0.65f, Interpolate.EaseType.EaseOutSine, new float[]{0,0.65f,1f}, new float[]{1f,0f,2.5f},1f, BannerColor.Yellow);
+			taskDelayCounter = 4f;
 		}
 		
-		if(currentTask == null && currentTaskIndex < taskList.Count && taskDelayCounter <= 0) currentTask = taskList[currentTaskIndex];
+		// If the currentTask is null, run the counter and set a new task
+		if(currentTask == null)
+		{
+			taskDelayCounter -= Time.deltaTime;
+			if(currentTaskIndex < taskList.Count && taskDelayCounter <= 0)
+			{
+				currentTask = taskList[currentTaskIndex];
+				Banner.AddMovingBanner("New Task!!", 82f, new Vector3(Screen.width /2, Screen.height/2,0), 0.65f, Interpolate.EaseType.EaseOutSine, new float[]{-512f, Screen.height * 0.5f + 320f, 3f}, new float[]{0f, -1 *(Screen.height * 0.5f + 256f), 3f}, 2.5f, BannerColor.Yellow);
+			}
+		}
 		
 		if(currentTask != null) currentTask.Update();
 	}
@@ -329,12 +352,21 @@ public class GameController : MonoBehaviour
 		{
 			AdjustGroupMood(MEETING_MOOD_INCREASE);
 			StatsAnalysis.completedMeetings += 1;
+			WorkersCompletedMeeting();				// Check which Workers where at the meeting.
+			// Check For Team Badge "All Aboard! Choo! Choo!"
+			if(WorkersInConference == 6) CheckForBadgeCompletion("All Aboard! Choo! Choo!");
+			Banner.AddScalingBanner("Meeting Complete!!", 82f, new Vector3(Screen.width /2, Screen.height/2 - 256f,0), 0.35f, Interpolate.EaseType.EaseOutSine, new float[]{0,0.35f,1f}, new float[]{1f,0f,2.5f},1f, BannerColor.Blue);
 			meeting = null;
 		}
 	}
 	private void SpawnMeeting()
 	{
 		meeting = new Meeting(50f * WORK_RATE);		//TODO: Adjust this as needed.
+		Banner.AddScalingBanner("New Meeting Event!!", 82f, new Vector3(Screen.width /2, Screen.height/2 - 256f,0), 0.35f, Interpolate.EaseType.EaseOutSine, new float[]{0,0.35f,1f}, new float[]{1f,0f,2.5f},1f, BannerColor.Blue);
+	}
+	private void WorkersCompletedMeeting()
+	{
+		foreach(Worker worker in workers) if(worker.InConferenceRoom()) worker.CompletedMeeting();
 	}
 	
 	/////////////////////////// COMPLETION METER //////////////////////////////
@@ -365,12 +397,14 @@ public class GameController : MonoBehaviour
 					if(milestone.Failed()) { SpawnMeeting(); }	// Spawn a Meeting
 					if(milestone.Achieved())  // Reduce Frustration, 25% chance for Meeting?
 					{ 
+						completedMilestones++;		// Add to team milestones completed
 						AdjustGroupMood(MILESTONE_MOOD_INCREASE); 
 						if(Random.Range(0,100) < 25) SpawnMeeting();
 					}	
 				}
 			}
 		}
+
 	}
 	
 	/////////////////////////// DRAW COMPLETION METER AND CURRENT TASK //////////////////////////////
@@ -667,13 +701,14 @@ public class GameController : MonoBehaviour
 			return;
 		}
 		
-		for(int i = 0; i < workers.Count - 1; i++)
+		for(int i = 0; i < workers.Count; i++)
 		{
 			//GameObject obj = workers[i].gameObject;
 			Vector3 pos = workers[i].GetPosition();
-			pos.x -= 3f;
+			pos.x -= 5f;
 			workers[i].SetPosition(pos);
 		}
+		Debug.Log("Moved Workers To Center.");
 	}
 	
 	// ------------------------ Worker List Management -------------------------------
@@ -687,7 +722,7 @@ public class GameController : MonoBehaviour
 		return worker;
 	}
 	
-	static public void CountWorkers()
+	public void CountWorkers()
 	{
 		Artists = 0;
 		Programmers = 0;
@@ -709,8 +744,6 @@ public class GameController : MonoBehaviour
 			}
 		}
 		TotalWorkers = workers.Count;
-		
-		//Debug.Log("Workers: " + workers.Count + "; Programmers " + Programmers + "; Artists " + Artists + "; AudioDesigners " + AudioDesigners);
 	}
 	private void CountWorkersPerRoom()
 	{
@@ -777,6 +810,44 @@ public class GameController : MonoBehaviour
 	static public float Map(float current, float from1, float from2, float to1, float to2)
 	{
 	    return to1 + (current - from1) * (to2 - to1) / (from2 - from1);
+	}
+
+	/////////////////////////// TEAM BADGES //////////////////////////////
+
+	public void CheckForBadgeCompletion(string badgeName)
+	{
+		foreach(TeamBadge badge in TeamBadge.teamBadges)
+		{
+			if(badgeName == badge.name && !badge.completed)
+			{
+				badge.completed = true;
+				// Spawn Particle!
+				SpawnParticle.SpawnTeamBadgearticle(gameObject.transform, badge.completedTex);
+				return;
+			}
+		}
+	}
+	public bool HasBadge(string badgeName)
+	{
+		foreach(TeamBadge badge in TeamBadge.teamBadges) if(badgeName == badge.name && !badge.completed) return true;
+		return false;
+	}
+
+	private void CheckForMindBlownBadge()
+	{
+		bool allstars = true;
+		bool allbadges = true;
+
+		foreach(Worker worker in workers)
+		{
+			if(!worker.CompletedAllBadges()) allbadges = false;
+			if( worker.GetStars() < 5) allstars = false;
+		}
+
+		if(workers.Count < 1) return;
+
+		// Check For Team Badge "Mind Blown"
+		if(allstars && allstars) CheckForBadgeCompletion("Mind Blown");
 	}
 	
 }

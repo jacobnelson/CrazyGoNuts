@@ -84,7 +84,7 @@ public class TeamBadge : MeritBadge				// These are only for the TEAM
 		{
 			TeamBadge badge = new TeamBadge(i);
 			teamBadges.Add(badge);
-			if(Random.Range(0f,1f) > 0.5f) badge.completed = true;
+			//if(Random.Range(0f,1f) > 0.5f) badge.completed = true;
 		}
 	}
 	

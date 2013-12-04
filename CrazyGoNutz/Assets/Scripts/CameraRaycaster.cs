@@ -275,12 +275,13 @@ public class CameraRaycaster : MonoBehaviour
 	{
 		// By dropping one Worker onto another, you remove the Roadblock of the targetWorker, 
 		// but increase the frustration of the dropped Worker, as long as they are the same WorkerType
-		if(targetWorker.Roadblocked() && targetWorker.GetWorkerType() == droppedWorker.GetWorkerType())
+		//if(targetWorker.Roadblocked() && targetWorker.GetWorkerType() == droppedWorker.GetWorkerType())
+		if(targetWorker.Roadblocked())
 		{
-			targetWorker.RemoveRoadblock();
-			//droppedWorker.AdjustFrustration(20f);
+			targetWorker.RemoveRoadblock();		// Remove targetWorker's Roadblock
+			droppedWorker.AdjustMood(15);		// Reduce droppedWorker's Mood by 15
+			droppedWorker.HelpedOtherStudent();	// Add to droppedWorker.studentsHelped
 		}
-		//Debug.Log("Dropped " + droppedWorker.name + " onto " + targetWorker.name);
 	}
 	
 }
